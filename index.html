@@ -120,7 +120,7 @@
   .run .r{text-align:right;white-space:nowrap;min-width:62px}
   .run .r b{white-space:nowrap}
   .run .r b{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.2px}
-  .run .r span{display:block;font-size:10.5px;color:var(--ink3);font-variant-numeric:tabular-nums}
+  .run .r > span{display:block;font-size:10.5px;color:var(--ink3);font-variant-numeric:tabular-nums}
   .tl{display:inline-block;font-size:10px;font-weight:700;color:var(--acc);
     background:rgba(184,255,60,.09);border:1px solid rgba(184,255,60,.20);
     padding:2px 6px;border-radius:5px;margin-top:3px}
@@ -408,7 +408,7 @@ const DATA = {"weeks": [{"start": "2026-09-28", "label": "9/28", "km": 25.54, "r
           <div class="n">${r.name}<span class="tag">${r.type === 'treadmill' ? 'Indoor' : 'Outdoor'}</span></div>
           <div class="m"><em>${r.dur}</em> · ${r.pace}/km · <em>${r.hr} bpm</em></div>
         </div>
-        <div class="r"><b>${r.km.toFixed(2)}<span style="font-size:11px;font-weight:600;color:var(--ink3)"> km</span></b>
+        <div class="r"><b>${r.km.toFixed(2)}<span style="display:inline;font-size:11px;font-weight:600;color:var(--ink3)"> km</span></b>
           <span class="tl">${r.tl} TL</span></div>
       </div>`;
     });
