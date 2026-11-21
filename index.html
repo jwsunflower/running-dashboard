@@ -526,14 +526,10 @@ function selectRun(id, scroll){
   hiLayer.clearLayers();
   allLayer.eachLayer(l => l.setStyle({opacity:.28, weight:2, color:'#8fe02c'}));
   const card = document.getElementById('routeCard');
-  const title = document.getElementById('rcTitle');
-  const desc = document.getElementById('rcDesc');
   if (r.path){
     const line = L.polyline(r.path, {color:'#b8ff3c', weight:4.5, opacity:1}).addTo(hiLayer);
     const b = line.getBounds().pad(0.15);
     map.fitBounds(b, {animate:true});
-    title.textContent = `${r.md} · ${r.city} · ${r.km.toFixed(2)} km`;
-    desc.innerHTML = `${r.start} 시작 · ${r.dur} · ${r.pace}/km · ${r.hr} bpm · ${r.tl} TL`;
     card.innerHTML = `<div class="top"><div>
         <div class="t">${r.md} · ${r.city} · ${r.km.toFixed(2)} km</div>
         <div class="d">${r.start} 시작 · ${r.dur} · ${r.pace}/km · 평균 ${r.hr} bpm · ${r.tl} TL</div></div></div>
@@ -551,7 +547,6 @@ function selectRun(id, scroll){
       </div>
       <div class="hint">시작·종료 지점 약 260m는 개인정보 보호를 위해 잘라 표시합니다. 상승 고도는 GPS 원본 기준입니다.</div>`;
   } else {
-    title.textContent = `${r.md} · ${r.city} · ${r.km.toFixed(2)} km`;
     card.innerHTML = `<div class="top"><div>
         <div class="t">${r.md} · ${r.city} · ${r.km.toFixed(2)} km</div>
         <div class="d">${r.dur} · ${r.pace}/km · 평균 ${r.hr} bpm · ${r.tl} TL</div></div></div>
