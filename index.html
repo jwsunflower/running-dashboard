@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0a0c10">
-<title>Running Log · COROS Dashboard</title>
-<meta name="description" content="A personal running log — distance, pace, training load, recovery and HRV synced from COROS.">
+<title>러닝 로그 · COROS 대시보드</title>
+<meta name="description" content="2026 러닝 시즌 기록 — 거리·페이스·훈련부하·회복도와 GPS 경로 지도.">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
   :root{
     --bg:#0a0c10; --bg2:#10141b; --card:#141922; --card2:#181e28;
@@ -23,12 +24,10 @@
       var(--bg);
     color:var(--ink);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Pretendard","Apple SD Gothic Neo",Roboto,sans-serif;
-    font-size:16px; line-height:1.45;
-    -webkit-font-smoothing:antialiased;
+    font-size:16px; line-height:1.45; -webkit-font-smoothing:antialiased;
     padding-bottom:40px;
   }
-  .wrap{max-width:760px;margin:0 auto;padding:18px 16px 0}
-  /* ---------- header ---------- */
+  .wrap{max-width:780px;margin:0 auto;padding:18px 16px 0}
   header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 2px 18px}
   .brand{display:flex;align-items:center;gap:10px}
   .mark{width:34px;height:34px;border-radius:11px;background:linear-gradient(145deg,var(--acc),#58c93a);
@@ -39,7 +38,6 @@
   .stamp{text-align:right;font-size:10.5px;color:var(--ink3);letter-spacing:.4px;line-height:1.4}
   .stamp b{display:block;color:var(--ink2);font-weight:600;font-size:11.5px}
 
-  /* ---------- hero ---------- */
   .hero{position:relative;overflow:hidden;border-radius:24px;padding:22px 20px 18px;
     background:linear-gradient(160deg,#1b2a17 0%,#141c19 42%,#121821 100%);
     border:1px solid #2c3a28;box-shadow:0 18px 44px rgba(0,0,0,.45)}
@@ -51,8 +49,7 @@
   .pill{font-size:10.5px;font-weight:600;padding:5px 10px;border-radius:999px;border:1px solid var(--line2);
     color:var(--ink2);background:rgba(255,255,255,.03);white-space:nowrap}
   .big{display:flex;align-items:baseline;gap:7px;margin:14px 0 2px;position:relative;z-index:1}
-  .big .num{font-size:58px;font-weight:800;letter-spacing:-2.5px;line-height:.95;
-    font-variant-numeric:tabular-nums}
+  .big .num{font-size:58px;font-weight:800;letter-spacing:-2.5px;line-height:.95;font-variant-numeric:tabular-nums}
   .big .unit{font-size:17px;font-weight:600;color:var(--acc);letter-spacing:-.2px}
   .hero-sub{font-size:13px;color:var(--ink2);position:relative;z-index:1}
   .hero-sub b{color:var(--ink);font-weight:600}
@@ -63,17 +60,14 @@
   .hg b{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
   .hg small{font-size:9.5px;color:var(--ink3);font-weight:500}
 
-  /* ---------- section ---------- */
   section{margin-top:26px}
-  .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 4px 11px}
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 4px 11px;gap:10px}
   .sec-head h2{font-size:13px;margin:0;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--ink)}
-  .sec-head span{font-size:10.5px;color:var(--ink3);letter-spacing:.3px}
+  .sec-head span{font-size:10.5px;color:var(--ink3);letter-spacing:.3px;text-align:right}
 
-  /* ---------- stat cards ---------- */
   .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px}
-  .card .k{font-size:10.5px;letter-spacing:.9px;text-transform:uppercase;color:var(--ink3);font-weight:600;
-    display:flex;align-items:center;gap:6px}
+  .card .k{font-size:10.5px;letter-spacing:.9px;text-transform:uppercase;color:var(--ink3);font-weight:600;display:flex;align-items:center;gap:6px}
   .dot{width:6px;height:6px;border-radius:50%;background:var(--acc);display:inline-block}
   .card .v{font-size:27px;font-weight:800;letter-spacing:-1px;margin:6px 0 1px;font-variant-numeric:tabular-nums}
   .card .v small{font-size:12px;font-weight:600;color:var(--ink3);letter-spacing:0;margin-left:2px}
@@ -81,21 +75,29 @@
   .bar{height:5px;border-radius:99px;background:#1e2532;margin-top:10px;overflow:hidden}
   .bar i{display:block;height:100%;border-radius:99px}
 
-  /* ---------- chart ---------- */
   .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 14px 10px}
   .chart{width:100%;height:auto;display:block;overflow:visible}
   .chart text{font-family:inherit}
-  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:2px 2px 0;font-size:10.5px;color:var(--ink3)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:6px 2px 0;font-size:10.5px;color:var(--ink3)}
   .legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
 
-  /* ---------- four week strip ---------- */
-  .strip{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
-    border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-  .strip div{background:var(--card);padding:13px 12px}
-  .strip span{display:block;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin-bottom:4px}
-  .strip b{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.4px}
+  /* map */
+  .mapbar{display:flex;align-items:center;gap:8px;margin:0 2px 10px}
+  .sel{flex:1;background:var(--card);border:1px solid var(--line2);color:var(--ink2);border-radius:11px;
+    padding:9px 10px;font-size:12.5px;font-family:inherit;font-weight:600;appearance:none}
+  #map{height:330px;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);
+    background:#0d1116;z-index:0}
+  .leaflet-container{background:#0d1116;font-family:inherit}
+  .routecard{margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:15px;padding:13px 15px}
+  .routecard .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .routecard .t{font-size:14.5px;font-weight:700}
+  .routecard .d{font-size:11.5px;color:var(--ink3);margin-top:2px}
+  .routecard .nums{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:11px}
+  .routecard .nums div{background:rgba(255,255,255,.03);border-radius:10px;padding:7px 6px;text-align:center}
+  .routecard .nums span{display:block;font-size:9px;letter-spacing:.5px;text-transform:uppercase;color:var(--ink3)}
+  .routecard .nums b{font-size:13.5px;font-variant-numeric:tabular-nums}
+  .routecard .hint{font-size:11.5px;color:var(--ink3);margin-top:9px}
 
-  /* ---------- filters ---------- */
   .chips{display:flex;gap:7px;margin:0 2px 12px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
   .chip{flex:0 0 auto;font-size:11.5px;font-weight:600;padding:7px 13px;border-radius:999px;
@@ -103,29 +105,30 @@
     transition:background .15s,color .15s,border-color .15s;font-family:inherit}
   .chip[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:#0a0c10}
 
-  /* ---------- run list ---------- */
   .month-label{font-size:11px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;
-    color:var(--ink3);margin:16px 4px 8px}
+    color:var(--ink3);margin:16px 4px 8px;display:flex;justify-content:space-between}
   .month-label:first-child{margin-top:2px}
+  .month-label em{font-style:normal;color:var(--ink3);font-weight:600;letter-spacing:.2px;text-transform:none;font-size:10.5px}
   .run{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;
-    background:var(--card);border:1px solid var(--line);border-radius:15px;padding:12px 14px;margin-bottom:8px}
+    background:var(--card);border:1px solid var(--line);border-radius:15px;padding:12px 14px;margin-bottom:8px;
+    cursor:pointer;transition:border-color .15s,background .15s}
+  .run.on{border-color:var(--acc);background:#171f14}
   .run .d{text-align:center}
   .run .d b{display:block;font-size:16.5px;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums}
   .run .d span{font-size:9.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3)}
   .run .n{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
   .tag{font-size:9px;font-weight:700;letter-spacing:.5px;padding:2px 6px;border-radius:5px;
     text-transform:uppercase;border:1px solid var(--line2);color:var(--ink3)}
+  .tag.gps{color:var(--acc);border-color:rgba(184,255,60,.35);background:rgba(184,255,60,.08)}
   .run .m{font-size:11.5px;color:var(--ink3);margin-top:3px;font-variant-numeric:tabular-nums}
   .run .m em{font-style:normal;color:var(--ink2)}
-  .run .r{text-align:right;white-space:nowrap;min-width:62px}
-  .run .r b{white-space:nowrap}
+  .run .r{text-align:right;white-space:nowrap;min-width:64px}
   .run .r b{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.2px}
   .run .r > span{display:block;font-size:10.5px;color:var(--ink3);font-variant-numeric:tabular-nums}
   .tl{display:inline-block;font-size:10px;font-weight:700;color:var(--acc);
     background:rgba(184,255,60,.09);border:1px solid rgba(184,255,60,.20);
     padding:2px 6px;border-radius:5px;margin-top:3px}
 
-  /* ---------- records ---------- */
   .rec{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .rec div{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:11px 13px;
     display:flex;align-items:baseline;justify-content:space-between;gap:8px}
@@ -139,23 +142,18 @@
 
   footer{margin:30px 4px 0;padding-top:16px;border-top:1px solid var(--line);
     font-size:10.5px;color:var(--ink3);line-height:1.6;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-  footer a{color:var(--ink2);text-decoration:none;border-bottom:1px dotted var(--line2)}
   @media (max-width:430px){
     .wrap{padding:14px 13px 0}
     .big .num{font-size:50px}
     .hero-grid{grid-template-columns:repeat(2,1fr)}
     .hero{padding:20px 17px 16px}
-    .strip{grid-template-columns:1fr 1fr}
-    .rec{grid-template-columns:1fr}
     .card .v{font-size:25px}
+    #map{height:290px}
+    .routecard .nums{grid-template-columns:repeat(2,1fr)}
   }
   @media (max-width:360px){
     .big .num{font-size:44px}
     .stats{grid-template-columns:1fr}
-  }
-  @media (prefers-reduced-motion:no-preference){
-    .run,.card,.panel{transition:border-color .18s}
-    .run:hover,.card:hover{border-color:var(--line2)}
   }
 </style>
 </head>
@@ -166,246 +164,302 @@
     <div class="brand">
       <div class="mark">R</div>
       <div>
-        <h1>Running Log</h1>
-        <p>COROS Dashboard · @jwsunflower</p>
+        <h1>러닝 로그</h1>
+        <p>COROS 대시보드 · @jwsunflower</p>
       </div>
     </div>
     <div class="stamp">
-      <b>Last updated</b>
-      2026-11-21 · 11:21 KST
+      <b>업데이트</b>
+      2026-11-21 14:32 KST
     </div>
   </header>
 
-  <!-- HERO : latest run -->
+  <!-- SEASON HERO -->
   <div class="hero">
     <div class="hero-top">
       <div>
-        <div class="eyebrow">Latest run</div>
-        <div class="hero-date">Sat 21 Nov 2026 · Seoul Run</div>
+        <div class="eyebrow">2026 시즌</div>
+        <div class="hero-date">1월 1일 – 11월 21일 · COROS 기록 전체</div>
       </div>
-      <div class="pill">SAT</div>
+      <div class="pill" id="routePill">경로 10건</div>
     </div>
     <div class="big">
-      <div class="num">7.24</div>
+      <div class="num">1,343.9</div>
       <div class="unit">km</div>
     </div>
+    <div class="hero-sub">러닝 <b>174회</b> · 평균 페이스 <b>6'45"/km</b></div>
     <div class="hero-grid">
-      <div class="hg"><span>Pace</span><b>06'17"</b><small>/km</small></div>
-      <div class="hg"><span>Time</span><b>00:45:31</b></div>
-      <div class="hg"><span>Avg HR</span><b>141</b><small>bpm</small></div>
-      <div class="hg"><span>Load</span><b>79</b><small>TL</small></div>
+      <div class="hg"><span>시간</span><b>151:15:33</b></div>
+      <div class="hg"><span>훈련부하</span><b>22,088</b><small> TL</small></div>
+      <div class="hg"><span>야외 / 실내</span><b>127<small>/</small>47</b></div>
+      <div class="hg"><span>평균 심박</span><b>155</b><small> bpm</small></div>
     </div>
   </div>
 
   <!-- READINESS -->
   <section>
-    <div class="sec-head"><h2>Readiness &amp; fitness</h2><span>COROS EvoLab · this morning</span></div>
+    <div class="sec-head"><h2>회복 &amp; 피트니스</h2><span>COROS EvoLab · 11월 21일 오후</span></div>
     <div class="stats">
       <div class="card">
-        <div class="k"><span class="dot"></span>Recovery</div>
-        <div class="v">95<small>%</small></div>
-        <div class="s">9 hrs till full recovery · <b style="color:var(--acc);font-weight:600">Fresh</b></div>
-        <div class="bar"><i style="width:95%;background:linear-gradient(90deg,#6ee7a8,#b8ff3c)"></i></div>
+        <div class="k"><span class="dot"></span>회복도</div>
+        <div class="v">97<small>%</small></div>
+        <div class="s">완전 회복까지 7시간 · <b style="color:var(--acc);font-weight:600">Fresh</b></div>
+        <div class="bar"><i style="width:97%;background:linear-gradient(90deg,#6ee7a8,#b8ff3c)"></i></div>
       </div>
       <div class="card">
-        <div class="k"><span class="dot" style="background:var(--blu)"></span>Overnight HRV</div>
+        <div class="k"><span class="dot" style="background:var(--blu)"></span>야간 HRV</div>
         <div class="v">63<small>ms</small></div>
-        <div class="s">Normal range 49–67 ms · in range</div>
+        <div class="s">정상 범위 49–67ms · 범위 내</div>
         <div class="bar"><i style="width:70%;background:linear-gradient(90deg,#57b6ff,#8fd4ff)"></i></div>
       </div>
       <div class="card">
-        <div class="k"><span class="dot" style="background:var(--org)"></span>Base Fitness</div>
+        <div class="k"><span class="dot" style="background:var(--org)"></span>기초 체력</div>
         <div class="v">60</div>
-        <div class="s">Load impact 36 · intensity trend 60%</div>
+        <div class="s">부하 영향 36 · 강도 추세 60%</div>
         <div class="bar"><i style="width:60%;background:linear-gradient(90deg,#ffb05c,#ffd39b)"></i></div>
       </div>
       <div class="card">
-        <div class="k"><span class="dot" style="background:var(--pnk)"></span>Running Fitness</div>
+        <div class="k"><span class="dot" style="background:var(--pnk)"></span>러닝 피트니스</div>
         <div class="v">82.6</div>
-        <div class="s">VO₂ max 44 · resting HR 45 bpm</div>
+        <div class="s">역치 심박 167 · 안정시 45 bpm</div>
         <div class="bar"><i style="width:78%;background:linear-gradient(90deg,#ff7a9c,#ffc0cf)"></i></div>
       </div>
     </div>
   </section>
 
-  <!-- WEEKLY VOLUME -->
-  <section>
-    <div class="sec-head"><h2>Weekly volume</h2><span>last 8 weeks · Mon–Sun</span></div>
-    <div class="panel">
-      <svg id="volChart" class="chart" viewBox="0 0 340 190" role="img" aria-label="Weekly running distance for the last eight weeks"></svg>
-      <div class="legend"><span><i style="background:var(--acc)"></i>This week</span><span><i style="background:#39465c"></i>Previous weeks</span></div>
+  <!-- MAP -->
+  <section id="mapSection">
+    <div class="sec-head"><h2>경로 지도</h2><span id="mapCount">10개 러닝 · GPS 경로</span></div>
+    <div class="mapbar">
+      <select id="mapMonth" class="sel" aria-label="월 선택">
+        <option value="all">전체 기간</option>
+        <option value="1">1월</option>
+        <option value="2">2월</option>
+        <option value="3">3월</option>
+        <option value="4">4월</option>
+        <option value="5">5월</option>
+        <option value="6">6월</option>
+        <option value="7">7월</option>
+        <option value="8">8월</option>
+        <option value="9">9월</option>
+        <option value="10">10월</option>
+        <option value="11">11월</option>
+      </select>
+      <button class="chip" id="fitBtn" style="flex:0 0 auto">전체 보기</button>
+    </div>
+    <div id="map"></div>
+    <div class="routecard" id="routeCard">
+      <div class="top">
+        <div>
+          <div class="t" id="rcTitle">경로를 불러오는 중…</div>
+          <div class="d" id="rcDesc"></div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <!-- PACE TREND -->
+  <!-- MONTHLY -->
   <section>
-    <div class="sec-head"><h2>Pace trend</h2><span>last 14 sessions · min/km</span></div>
+    <div class="sec-head"><h2>월간 거리</h2><span>2026 · 12월 미포함</span></div>
     <div class="panel">
-      <svg id="paceChart" class="chart" viewBox="0 0 340 170" role="img" aria-label="Average pace of the last fourteen sessions"></svg>
-      <div class="legend"><span>Up = faster</span></div>
+      <svg id="monthChart" class="chart" viewBox="0 0 340 195" role="img" aria-label="2026년 월별 러닝 거리"></svg>
+      <div class="legend"><span><i style="background:var(--acc)"></i>이번 달</span><span><i style="background:#39465c"></i>지난 달</span></div>
     </div>
   </section>
 
-  <!-- 4 WEEK SUMMARY -->
+  <!-- PACE -->
   <section>
-    <div class="sec-head"><h2>Last 4 weeks</h2><span>26 Oct – 21 Nov</span></div>
-    <div class="strip">
-      <div><span>Distance</span><b>101.56 km</b></div>
-      <div><span>Training load</span><b>1659 TL</b></div>
-      <div><span>Time</span><b>10:28:27</b></div>
-      <div><span>Sessions</span><b>13</b></div>
-      <div><span>Avg HR</span><b>153 bpm</b></div>
-      <div><span>Avg / week</span><b>25.4 km</b></div>
+    <div class="sec-head"><h2>월별 평균 페이스</h2><span>빠를수록 위 · min/km</span></div>
+    <div class="panel">
+      <svg id="paceChart" class="chart" viewBox="0 0 340 175" role="img" aria-label="2026년 월별 평균 페이스"></svg>
+    </div>
+  </section>
+
+  <!-- WEEKLY -->
+  <section>
+    <div class="sec-head"><h2>주간 거리</h2><span>2026 · 46주 (월–일)</span></div>
+    <div class="panel">
+      <svg id="weekChart" class="chart" viewBox="0 0 340 150" role="img" aria-label="2026년 주간 러닝 거리"></svg>
+      <div class="legend"><span><i style="background:var(--blu)"></i>주간 합계</span><span>최고 74.2 km</span></div>
     </div>
   </section>
 
   <!-- RUNS -->
   <section>
-    <div class="sec-head"><h2>Recent runs</h2><span>40 sessions · 8 Sep – 21 Nov</span></div>
-    <div class="chips" role="group" aria-label="Filter runs">
-      <button class="chip" data-f="all" aria-pressed="true">All</button>
-      <button class="chip" data-f="run" aria-pressed="false">Outdoor</button>
-      <button class="chip" data-f="treadmill" aria-pressed="false">Treadmill</button>
+    <div class="sec-head"><h2>러닝 기록</h2><span>174회 · 1월 1일 – 11월 21일</span></div>
+    <div class="chips" role="group" aria-label="러닝 필터">
+      <button class="chip" data-f="all" aria-pressed="true">전체</button>
+      <button class="chip" data-f="out" aria-pressed="false">야외</button>
+      <button class="chip" data-f="tread" aria-pressed="false">트레드밀</button>
+      <button class="chip" data-f="gps" aria-pressed="false">경로 있음</button>
     </div>
     <div id="runList"></div>
   </section>
 
   <!-- RECORDS -->
   <section>
-    <div class="sec-head"><h2>Best efforts</h2><span>personal records · 4 weeks</span></div>
+    <div class="sec-head"><h2>개인 최고 기록</h2><span>COROS 전체 기간</span></div>
     <div class="rec">
-      <div><span>1 km</span><b>05:26</b></div>
-      <div><span>3 km</span><b>16:31</b></div>
-      <div><span>5 km</span><b>27:39</b></div>
-      <div><span>10 km</span><b>55:32</b></div>
-      <div><span>Half marathon</span><b>1:58:04</b></div>
-      <div><span>Marathon</span><b>3:58:41</b></div>
-      <div><span>Longest run</span><b>42.24 km</b></div>
-      <div><span>Most elevation</span><b>154 m</b></div>
+      <div><span>1 km</span><b>4:31</b></div>
+      <div><span>3 km</span><b>14:03</b></div>
+      <div><span>5 km</span><b>23:54</b></div>
+      <div><span>10 km</span><b>48:42</b></div>
+      <div><span>하프</span><b>1:58:04</b></div>
+      <div><span>풀</span><b>3:58:41</b></div>
+      <div><span>최장 거리</span><b>42.24 km</b></div>
+      <div><span>최대 상승</span><b>1,118 m</b></div>
     </div>
   </section>
 
-  <!-- RACE PREDICTOR -->
+  <!-- RACE -->
   <section>
-    <div class="sec-head"><h2>Race predictor</h2><span>COROS estimate</span></div>
+    <div class="sec-head"><h2>레이스 예측</h2><span>COROS 추정</span></div>
     <div class="rec">
-      <div><span>5 km</span><b>23:44 <em style="font-style:normal;color:var(--ink3);font-size:11px">4'45"</em></b></div>
-      <div><span>10 km</span><b>49:32 <em style="font-style:normal;color:var(--ink3);font-size:11px">4'57"</em></b></div>
-      <div><span>Half marathon</span><b>1:51:36 <em style="font-style:normal;color:var(--ink3);font-size:11px">5'17"</em></b></div>
-      <div><span>Marathon</span><b>3:57:13 <em style="font-style:normal;color:var(--ink3);font-size:11px">5'37"</em></b></div>
+      <div><span>5 km</span><b>23:44</b></div>
+      <div><span>10 km</span><b>49:32</b></div>
+      <div><span>하프</span><b>1:51:36</b></div>
+      <div><span>풀</span><b>3:57:13</b></div>
     </div>
   </section>
 
   <section>
     <div class="note">
-      <div class="k">Training status · Resuming</div>
-      <p>Increased intensity over the past seven days. The body is gradually adjusting to the new workload — building training time and intensity over time like this is an effective way to improve fitness. Yesterday's efficiency score: 101% (good).</p>
+      <div class="k">훈련 상태 · Resuming</div>
+      <p>지난 7일간 강도가 올라갔습니다. 몸이 새 부하에 적응하는 중이며, 훈련 시간과 강도를 점진적으로 늘리는 방식은 체력 향상에 효과적입니다. 오늘 효율 점수는 101% (Good)입니다.</p>
     </div>
   </section>
 
   <footer>
     <div>
-      Metrics synced from COROS · Training Hub, 21 Nov 2026.<br>
-      Heart-rate and pace zones: threshold 04'57"/km, LT HR 167 bpm, max HR 189 bpm.
+      COROS Training Hub 기록 · 2026-11-21 14:32 KST 조회<br>
+      역치 페이스 04'57"/km · 역치 심박 167 bpm · 최대 189 bpm
     </div>
-    <div style="text-align:right">Personal log · no personal data published</div>
+    <div style="text-align:right">개인 기록 페이지 · 이름·연락처 미게시<br>경로는 시작·종료 지점 약 260m를 잘라 표시</div>
   </footer>
 </div>
 
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const DATA = {"weeks": [{"start": "2026-09-28", "label": "9/28", "km": 25.54, "runs": 4, "tl": 343, "time": "2:30:23", "pace": "05'53\"", "pace_s": 353.4, "current": false}, {"start": "2026-10-05", "label": "10/5", "km": 38.87, "runs": 3, "tl": 567, "time": "4:01:29", "pace": "06'12\"", "pace_s": 372.4, "current": false}, {"start": "2026-10-12", "label": "10/12", "km": 31.33, "runs": 4, "tl": 450, "time": "3:03:58", "pace": "05'53\"", "pace_s": 352.7, "current": false}, {"start": "2026-10-19", "label": "10/19", "km": 2.64, "runs": 1, "tl": 26, "time": "0:20:17", "pace": "07'41\"", "pace_s": 461.0, "current": false}, {"start": "2026-10-26", "label": "10/26", "km": 52.79, "runs": 4, "tl": 1006, "time": "4:59:38", "pace": "05'41\"", "pace_s": 340.8, "current": false}, {"start": "2026-11-02", "label": "11/2", "km": 17.72, "runs": 4, "tl": 235, "time": "2:03:33", "pace": "06'58\"", "pace_s": 418.1, "current": false}, {"start": "2026-11-09", "label": "11/9", "km": 23.81, "runs": 4, "tl": 339, "time": "2:39:45", "pace": "06'42\"", "pace_s": 402.3, "current": false}, {"start": "2026-11-16", "label": "11/16", "km": 7.24, "runs": 1, "tl": 79, "time": "0:45:31", "pace": "06'17\"", "pace_s": 377.0, "current": true}], "months": [{"month": "2026-09", "km": 148.08, "runs": 16, "tl": 1988}, {"month": "2026-10", "km": 102.91, "runs": 14, "tl": 1456}, {"month": "2026-11", "km": 91.01, "runs": 10, "tl": 1514}], "runs": [{"date": "2026-11-21", "name": "Seoul Run", "type": "run", "km": 7.24, "dur": "00:45:31", "pace": "06'17\"", "pace_s": 377, "hr": 141, "tl": 79, "dow": "Sat", "md": "11/21", "year": 2026}, {"date": "2026-11-15", "name": "Seoul Run", "type": "run", "km": 9.86, "dur": "01:10:54", "pace": "07'11\"", "pace_s": 431, "hr": 145, "tl": 124, "dow": "Sun", "md": "11/15", "year": 2026}, {"date": "2026-11-14", "name": "Seoul Run", "type": "run", "km": 6.6, "dur": "00:46:57", "pace": "07'07\"", "pace_s": 427, "hr": 156, "tl": 98, "dow": "Sat", "md": "11/14", "year": 2026}, {"date": "2026-11-11", "name": "Treadmill", "type": "treadmill", "km": 3.85, "dur": "00:22:17", "pace": "05'47\"", "pace_s": 347, "hr": 150, "tl": 56, "dow": "Wed", "md": "11/11", "year": 2026}, {"date": "2026-11-09", "name": "Treadmill", "type": "treadmill", "km": 3.5, "dur": "00:19:37", "pace": "05'36\"", "pace_s": 336, "hr": 159, "tl": 61, "dow": "Mon", "md": "11/9", "year": 2026}, {"date": "2026-11-08", "name": "Incheon Run", "type": "run", "km": 6.02, "dur": "00:42:03", "pace": "06'59\"", "pace_s": 419, "hr": 151, "tl": 70, "dow": "Sun", "md": "11/8", "year": 2026}, {"date": "2026-11-07", "name": "Seoul Run", "type": "run", "km": 6.2, "dur": "00:41:55", "pace": "06'45\"", "pace_s": 405, "hr": 158, "tl": 61, "dow": "Sat", "md": "11/7", "year": 2026}, {"date": "2026-11-05", "name": "Treadmill", "type": "treadmill", "km": 2.8, "dur": "00:19:28", "pace": "06'57\"", "pace_s": 417, "hr": 150, "tl": 48, "dow": "Thu", "md": "11/5", "year": 2026}, {"date": "2026-11-04", "name": "Treadmill", "type": "treadmill", "km": 2.7, "dur": "00:20:07", "pace": "07'27\"", "pace_s": 447, "hr": 153, "tl": 56, "dow": "Wed", "md": "11/4", "year": 2026}, {"date": "2026-11-01", "name": "Seoul Run", "type": "run", "km": 42.24, "dur": "03:58:25", "pace": "05'39\"", "pace_s": 339, "hr": 169, "tl": 861, "dow": "Sun", "md": "11/1", "year": 2026}, {"date": "2026-10-31", "name": "Seoul Run", "type": "run", "km": 2.5, "dur": "00:16:37", "pace": "06'39\"", "pace_s": 399, "hr": 147, "tl": 25, "dow": "Sat", "md": "10/31", "year": 2026}, {"date": "2026-10-29", "name": "Treadmill", "type": "treadmill", "km": 3.8, "dur": "00:21:04", "pace": "05'33\"", "pace_s": 333, "hr": 158, "tl": 69, "dow": "Thu", "md": "10/29", "year": 2026}, {"date": "2026-10-26", "name": "Treadmill", "type": "treadmill", "km": 4.25, "dur": "00:23:32", "pace": "05'32\"", "pace_s": 332, "hr": 146, "tl": 51, "dow": "Mon", "md": "10/26", "year": 2026}, {"date": "2026-10-24", "name": "Seoul Run", "type": "run", "km": 2.64, "dur": "00:20:17", "pace": "07'41\"", "pace_s": 461, "hr": 157, "tl": 26, "dow": "Sat", "md": "10/24", "year": 2026}, {"date": "2026-10-18", "name": "Seoul Run", "type": "run", "km": 10.25, "dur": "01:05:02", "pace": "06'21\"", "pace_s": 381, "hr": 156, "tl": 109, "dow": "Sun", "md": "10/18", "year": 2026}, {"date": "2026-10-17", "name": "Seoul Run", "type": "run", "km": 15.02, "dur": "01:23:45", "pace": "05'35\"", "pace_s": 335, "hr": 165, "tl": 246, "dow": "Sat", "md": "10/17", "year": 2026}, {"date": "2026-10-17", "name": "Seoul Run", "type": "run", "km": 2.01, "dur": "00:12:45", "pace": "06'22\"", "pace_s": 382, "hr": 154, "tl": 26, "dow": "Sat", "md": "10/17", "year": 2026}, {"date": "2026-10-13", "name": "Treadmill", "type": "treadmill", "km": 4.05, "dur": "00:22:26", "pace": "05'32\"", "pace_s": 332, "hr": 157, "tl": 69, "dow": "Tue", "md": "10/13", "year": 2026}, {"date": "2026-10-11", "name": "Seoul Run", "type": "run", "km": 10.86, "dur": "00:53:07", "pace": "04'53\"", "pace_s": 293, "hr": 167, "tl": 226, "dow": "Sun", "md": "10/11", "year": 2026}, {"date": "2026-10-09", "name": "Seoul Run", "type": "run", "km": 20.01, "dur": "02:12:52", "pace": "06'38\"", "pace_s": 398, "hr": 159, "tl": 259, "dow": "Fri", "md": "10/9", "year": 2026}, {"date": "2026-10-05", "name": "Seoul Run", "type": "run", "km": 8.0, "dur": "00:55:30", "pace": "06'56\"", "pace_s": 416, "hr": 145, "tl": 82, "dow": "Mon", "md": "10/5", "year": 2026}, {"date": "2026-10-04", "name": "Seoul Run", "type": "run", "km": 9.94, "dur": "00:53:58", "pace": "05'26\"", "pace_s": 326, "hr": 162, "tl": 158, "dow": "Sun", "md": "10/4", "year": 2026}, {"date": "2026-10-03", "name": "Seoul Run", "type": "run", "km": 5.48, "dur": "00:38:34", "pace": "07'02\"", "pace_s": 422, "hr": 146, "tl": 44, "dow": "Sat", "md": "10/3", "year": 2026}, {"date": "2026-10-01", "name": "Treadmill", "type": "treadmill", "km": 4.1, "dur": "00:22:17", "pace": "05'26\"", "pace_s": 326, "hr": 154, "tl": 66, "dow": "Thu", "md": "10/1", "year": 2026}, {"date": "2026-09-29", "name": "Seoul Run", "type": "run", "km": 6.02, "dur": "00:35:34", "pace": "05'55\"", "pace_s": 355, "hr": 149, "tl": 75, "dow": "Tue", "md": "9/29", "year": 2026}, {"date": "2026-09-27", "name": "Seoul Run", "type": "run", "km": 30.31, "dur": "03:07:48", "pace": "06'12\"", "pace_s": 372, "hr": 164, "tl": 371, "dow": "Sun", "md": "9/27", "year": 2026}, {"date": "2026-09-26", "name": "Incheon Run", "type": "run", "km": 10.01, "dur": "01:02:36", "pace": "06'15\"", "pace_s": 375, "hr": 161, "tl": 156, "dow": "Sat", "md": "9/26", "year": 2026}, {"date": "2026-09-25", "name": "Seongnam Run", "type": "run", "km": 15.63, "dur": "01:36:25", "pace": "06'10\"", "pace_s": 370, "hr": 158, "tl": 249, "dow": "Fri", "md": "9/25", "year": 2026}, {"date": "2026-09-22", "name": "Fukuoka Run", "type": "run", "km": 2.02, "dur": "00:13:00", "pace": "06'27\"", "pace_s": 387, "hr": 146, "tl": 27, "dow": "Tue", "md": "9/22", "year": 2026}, {"date": "2026-09-22", "name": "Fukuoka Run", "type": "run", "km": 10.01, "dur": "00:54:12", "pace": "05'25\"", "pace_s": 325, "hr": 156, "tl": 160, "dow": "Tue", "md": "9/22", "year": 2026}, {"date": "2026-09-21", "name": "Fukuoka Run", "type": "run", "km": 6.2, "dur": "00:40:37", "pace": "06'33\"", "pace_s": 393, "hr": 142, "tl": 73, "dow": "Mon", "md": "9/21", "year": 2026}, {"date": "2026-09-19", "name": "Seoul Run", "type": "run", "km": 10.15, "dur": "01:41:35", "pace": "10'00\"", "pace_s": 600, "hr": 136, "tl": 110, "dow": "Sat", "md": "9/19", "year": 2026}, {"date": "2026-09-16", "name": "Treadmill", "type": "treadmill", "km": 4.03, "dur": "00:22:24", "pace": "05'34\"", "pace_s": 334, "hr": 155, "tl": 64, "dow": "Wed", "md": "9/16", "year": 2026}, {"date": "2026-09-15", "name": "Seoul Run", "type": "run", "km": 6.03, "dur": "00:37:34", "pace": "06'14\"", "pace_s": 374, "hr": 160, "tl": 80, "dow": "Tue", "md": "9/15", "year": 2026}, {"date": "2026-09-13", "name": "Seoul Run", "type": "run", "km": 18.42, "dur": "02:08:07", "pace": "06'57\"", "pace_s": 417, "hr": 155, "tl": 190, "dow": "Sun", "md": "9/13", "year": 2026}, {"date": "2026-09-12", "name": "Seoul Run", "type": "run", "km": 10.01, "dur": "01:43:19", "pace": "10'19\"", "pace_s": 619, "hr": 135, "tl": 111, "dow": "Sat", "md": "9/12", "year": 2026}, {"date": "2026-09-10", "name": "Seoul Run", "type": "run", "km": 7.05, "dur": "00:35:21", "pace": "05'01\"", "pace_s": 301, "hr": 168, "tl": 139, "dow": "Thu", "md": "9/10", "year": 2026}, {"date": "2026-09-10", "name": "Treadmill", "type": "treadmill", "km": 3.85, "dur": "00:23:03", "pace": "05'59\"", "pace_s": 359, "hr": 146, "tl": 51, "dow": "Thu", "md": "9/10", "year": 2026}, {"date": "2026-09-09", "name": "Treadmill", "type": "treadmill", "km": 4.11, "dur": "00:21:44", "pace": "05'18\"", "pace_s": 318, "hr": 156, "tl": 67, "dow": "Wed", "md": "9/9", "year": 2026}, {"date": "2026-09-08", "name": "Treadmill", "type": "treadmill", "km": 4.23, "dur": "00:22:56", "pace": "05'25\"", "pace_s": 325, "hr": 155, "tl": 65, "dow": "Tue", "md": "9/8", "year": 2026}], "four": {"km": 101.56, "tl": 1659, "time": "10:28:27", "count": 13, "hr": 153}, "paceTrend": [{"md": "11/21", "pace_s": 377, "pace": "06'17\"", "km": 7.24, "name": "Seoul Run"}, {"md": "11/15", "pace_s": 431, "pace": "07'11\"", "km": 9.86, "name": "Seoul Run"}, {"md": "11/14", "pace_s": 427, "pace": "07'07\"", "km": 6.6, "name": "Seoul Run"}, {"md": "11/11", "pace_s": 347, "pace": "05'47\"", "km": 3.85, "name": "Treadmill"}, {"md": "11/9", "pace_s": 336, "pace": "05'36\"", "km": 3.5, "name": "Treadmill"}, {"md": "11/8", "pace_s": 419, "pace": "06'59\"", "km": 6.02, "name": "Incheon Run"}, {"md": "11/7", "pace_s": 405, "pace": "06'45\"", "km": 6.2, "name": "Seoul Run"}, {"md": "11/5", "pace_s": 417, "pace": "06'57\"", "km": 2.8, "name": "Treadmill"}, {"md": "11/4", "pace_s": 447, "pace": "07'27\"", "km": 2.7, "name": "Treadmill"}, {"md": "11/1", "pace_s": 339, "pace": "05'39\"", "km": 42.24, "name": "Seoul Run"}, {"md": "10/31", "pace_s": 399, "pace": "06'39\"", "km": 2.5, "name": "Seoul Run"}, {"md": "10/29", "pace_s": 333, "pace": "05'33\"", "km": 3.8, "name": "Treadmill"}, {"md": "10/26", "pace_s": 332, "pace": "05'32\"", "km": 4.25, "name": "Treadmill"}, {"md": "10/24", "pace_s": 461, "pace": "07'41\"", "km": 2.64, "name": "Seoul Run"}]};
+const DATA = {"runs":[{"id":"481898756980113409","date":"2026-11-21","kind":"야외","city":"서울","name":"서울특별시 러닝","km":7.24,"dur":"00:45:31","dur_s":2731,"pace":"06'17\"","pace_s":377,"hr":141,"tl":79,"md":"11/21","dow":"Sat","mon":11,"route":true,"gain":16,"start":"06:14","path":[[37.52693,126.93421],[37.52675,126.93452],[37.52653,126.93484],[37.52629,126.93512],[37.52603,126.9354],[37.52573,126.93563],[37.52542,126.93583],[37.52512,126.93605],[37.52483,126.93634],[37.52457,126.93664],[37.52434,126.93697],[37.52412,126.93733],[37.5239,126.9377],[37.52364,126.93802],[37.52334,126.93827],[37.52303,126.93853],[37.52272,126.93881],[37.52246,126.93909],[37.5222,126.93942],[37.52193,126.93974],[37.52166,126.94008],[37.52139,126.94041],[37.52109,126.94072],[37.52082,126.94105],[37.52048,126.94129],[37.52012,126.94141],[37.51975,126.94141],[37.51937,126.94143],[37.51902,126.94156],[37.51866,126.94162],[37.51832,126.94175],[37.51778,126.94294],[37.51787,126.94338],[37.51802,126.94647],[37.51792,126.94693],[37.51778,126.9474],[37.51762,126.94785],[37.51746,126.94829],[37.51728,126.94871],[37.51705,126.94909],[37.5168,126.94947],[37.51657,126.94985],[37.51638,126.95027],[37.51619,126.9507],[37.51605,126.95115],[37.51591,126.95161],[37.51578,126.95208],[37.51565,126.95256],[37.51552,126.95302],[37.51529,126.95338],[37.51505,126.95389],[37.51489,126.95442],[37.5147,126.95492],[37.5145,126.95541],[37.51431,126.95598],[37.51413,126.95647],[37.51394,126.95696],[37.51366,126.95741],[37.5134,126.95787],[37.51304,126.95859],[37.51282,126.95899],[37.51267,126.95944],[37.51253,126.95991],[37.51234,126.96034],[37.51217,126.96071],[37.5119,126.96185],[37.51186,126.96105],[37.51206,126.96048],[37.51233,126.95992],[37.51257,126.95954],[37.51274,126.95912],[37.51292,126.95871],[37.51317,126.95835],[37.51339,126.95803],[37.51364,126.95777],[37.51379,126.95738],[37.51401,126.95662],[37.51424,126.9561],[37.51441,126.95553],[37.5146,126.95486],[37.51479,126.95429],[37.51497,126.95372],[37.51527,126.95329],[37.51557,126.9528],[37.51571,126.95222],[37.51589,126.9516],[37.51607,126.95099],[37.51631,126.95038],[37.51658,126.9498],[37.51692,126.9493],[37.51722,126.94878],[37.51743,126.94829],[37.51749,126.94815],[37.51763,126.94777],[37.51779,126.9473],[37.51807,126.94483],[37.51799,126.94417],[37.51792,126.94368],[37.51781,126.94328],[37.51774,126.94187],[37.51808,126.94163],[37.51847,126.9415],[37.51891,126.94143],[37.51935,126.9414],[37.51974,126.94139],[37.52012,126.94137],[37.52049,126.94126],[37.52077,126.94101],[37.52109,126.94073],[37.52139,126.94039],[37.52168,126.94005],[37.52196,126.93969],[37.52223,126.93937],[37.52251,126.93903],[37.52281,126.93872],[37.52322,126.93839],[37.52357,126.93806],[37.52392,126.93768],[37.52418,126.93721],[37.52451,126.93672],[37.52489,126.93628],[37.5253,126.93593],[37.52576,126.93565],[37.5262,126.93528],[37.52658,126.93482],[37.52689,126.93431],[37.52716,126.93376],[37.52741,126.9332],[37.52775,126.93271],[37.52813,126.93227],[37.52868,126.93178]]},{"id":"481762705303175172","date":"2026-11-15","kind":"야외","city":"서울","name":"서울특별시 러닝","km":9.86,"dur":"01:10:54","dur_s":4254,"pace":"07'11\"","pace_s":431,"hr":145,"tl":124,"md":"11/15","dow":"Sun","mon":11,"route":true,"gain":13,"start":"09:03","path":[[37.53305,126.92363],[37.53325,126.92299],[37.53352,126.92234],[37.53372,126.92163],[37.53393,126.92092],[37.53417,126.91913],[37.53438,126.91839],[37.53469,126.91646],[37.53475,126.91407],[37.5345,126.91333],[37.53421,126.91265],[37.53402,126.91188],[37.53362,126.91128],[37.53369,126.90919],[37.53413,126.90871],[37.53464,126.90823],[37.53506,126.90766],[37.53546,126.90707],[37.53591,126.90652],[37.53627,126.90593],[37.53662,126.90532],[37.53702,126.90472],[37.53743,126.9041],[37.53781,126.90346],[37.53817,126.90289],[37.53856,126.9023],[37.53891,126.90167],[37.53913,126.90091],[37.53948,126.90035],[37.53984,126.89958],[37.54023,126.89894],[37.54064,126.89829],[37.54102,126.89769],[37.54139,126.89707],[37.54181,126.89642],[37.54227,126.89581],[37.5426,126.89509],[37.54298,126.89442],[37.54332,126.89382],[37.54366,126.89314],[37.54406,126.89252],[37.54458,126.89197],[37.54506,126.89145],[37.54561,126.89102],[37.54619,126.89063],[37.54675,126.89022],[37.54728,126.88976],[37.54773,126.88922],[37.54813,126.88858],[37.54854,126.88794],[37.54897,126.88729],[37.54938,126.88667],[37.54978,126.88607],[37.5502,126.88544],[37.55063,126.88481],[37.55105,126.88416],[37.5514,126.88352],[37.55177,126.88285],[37.55205,126.88211],[37.55228,126.8815],[37.55201,126.88222],[37.55175,126.88291],[37.55142,126.88353],[37.55103,126.8842],[37.55063,126.88483],[37.55022,126.88543],[37.54983,126.88603],[37.54942,126.88664],[37.54899,126.88728],[37.54859,126.88789],[37.54819,126.8885],[37.54779,126.8891],[37.54734,126.88971],[37.54681,126.89017],[37.54627,126.89058],[37.54577,126.89093],[37.54527,126.89131],[37.54477,126.89173],[37.54436,126.89224],[37.5439,126.89273],[37.54356,126.89338],[37.54323,126.89404],[37.54286,126.89467],[37.54253,126.8953],[37.54219,126.89594],[37.54177,126.89652],[37.54138,126.89714],[37.54097,126.89776],[37.5406,126.89838],[37.54024,126.89894],[37.53988,126.89954],[37.53954,126.90016],[37.53922,126.90074],[37.53891,126.9017],[37.53855,126.90229],[37.53818,126.90288],[37.53781,126.90348],[37.53743,126.9041],[37.5371,126.90459],[37.53675,126.90513],[37.53651,126.9055],[37.53633,126.90585],[37.53613,126.90619],[37.53593,126.90651],[37.5357,126.90678],[37.53547,126.90703],[37.53526,126.90733],[37.53506,126.90762],[37.53484,126.90793],[37.5346,126.90821],[37.53437,126.90846],[37.53412,126.90869],[37.53392,126.90899],[37.5336,126.90915],[37.53329,126.91083],[37.53344,126.91113],[37.53367,126.91135],[37.53384,126.91157],[37.53399,126.91186],[37.53414,126.91235],[37.53431,126.91294],[37.53455,126.91351],[37.53492,126.91553],[37.53479,126.91617],[37.53464,126.91651],[37.53437,126.91842],[37.53401,126.92062],[37.5338,126.92124],[37.53364,126.92189],[37.53343,126.9225],[37.53303,126.9236]]},{"id":"481736724783857867","date":"2026-11-14","kind":"야외","city":"서울","name":"서울특별시 러닝","km":6.6,"dur":"00:46:57","dur_s":2817,"pace":"07'07\"","pace_s":427,"hr":156,"tl":98,"md":"11/14","dow":"Sat","mon":11,"route":false},{"id":"481672034525413381","date":"2026-11-11","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.85,"dur":"00:22:17","dur_s":1337,"pace":"05'47\"","pace_s":347,"hr":150,"tl":56,"md":"11/11","dow":"Wed","mon":11,"route":false},{"id":"481625645649002696","date":"2026-11-09","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.5,"dur":"00:19:37","dur_s":1177,"pace":"05'36\"","pace_s":336,"hr":159,"tl":61,"md":"11/9","dow":"Mon","mon":11,"route":false},{"id":"481599505144250469","date":"2026-11-08","kind":"야외","city":"인천","name":"인천광역시 러닝","km":6.02,"dur":"00:42:03","dur_s":2523,"pace":"06'59\"","pace_s":419,"hr":151,"tl":70,"md":"11/8","dow":"Sun","mon":11,"route":true,"gain":65,"start":"08:40","path":[[37.65367,126.47753],[37.6534,126.47769],[37.65303,126.47775],[37.65281,126.47749],[37.65258,126.4772],[37.65237,126.47695],[37.6521,126.47672],[37.65182,126.47657],[37.65151,126.47649],[37.65123,126.47657],[37.65092,126.47666],[37.65062,126.47671],[37.65029,126.47674],[37.64999,126.47676],[37.64968,126.47682],[37.64949,126.47683],[37.6492,126.47684],[37.64893,126.47684],[37.64861,126.47681],[37.64833,126.4768],[37.64805,126.47701],[37.64779,126.47721],[37.64753,126.47742],[37.6473,126.47767],[37.64707,126.47788],[37.64679,126.47806],[37.64655,126.47828],[37.6463,126.47857],[37.64608,126.47882],[37.64584,126.47913],[37.64561,126.47938],[37.64539,126.47969],[37.64534,126.48009],[37.6452,126.48046],[37.64504,126.48068],[37.64484,126.48098],[37.64464,126.48102],[37.64439,126.48105],[37.64416,126.4813],[37.64386,126.48134],[37.64367,126.48154],[37.64355,126.48187],[37.64345,126.48208],[37.6433,126.48246],[37.64314,126.48304],[37.64306,126.48337],[37.6428,126.4836],[37.64261,126.48388],[37.64248,126.4847],[37.64239,126.48501],[37.64229,126.48536],[37.64219,126.48562],[37.64199,126.48587],[37.6419,126.48619],[37.64178,126.48654],[37.64153,126.48779],[37.64152,126.48875],[37.64124,126.48876],[37.64096,126.48876],[37.64069,126.48876],[37.6404,126.48877],[37.64013,126.48879],[37.63984,126.48879],[37.63958,126.48878],[37.6393,126.48877],[37.63916,126.48852],[37.63895,126.48777],[37.63915,126.48734],[37.63934,126.48702],[37.6395,126.4867],[37.63967,126.48643],[37.63983,126.48614],[37.64022,126.48595],[37.64042,126.48623],[37.64062,126.48652],[37.64084,126.48683],[37.64105,126.4871],[37.64127,126.48741],[37.64148,126.4877],[37.64165,126.48803],[37.64215,126.49172],[37.64248,126.49179],[37.64275,126.49184],[37.64305,126.49191],[37.64326,126.49186],[37.64334,126.49147],[37.64352,126.49117],[37.6438,126.49098],[37.64385,126.48943],[37.64398,126.48908],[37.64442,126.48825],[37.64464,126.48802],[37.64494,126.48795],[37.64523,126.48792],[37.64553,126.4878],[37.64582,126.48772],[37.64613,126.48769],[37.64643,126.4877],[37.64678,126.4877],[37.64708,126.4877],[37.6474,126.48762],[37.64766,126.48752],[37.64797,126.48749],[37.64821,126.48766],[37.64836,126.48743],[37.64847,126.48708],[37.64859,126.48665],[37.64872,126.48628],[37.64894,126.48603],[37.64919,126.4858],[37.64944,126.4856],[37.6497,126.48536],[37.64997,126.48513],[37.65025,126.48488],[37.65049,126.48465],[37.65075,126.48439],[37.65097,126.48417],[37.65127,126.48397],[37.65156,126.48393],[37.65187,126.48397],[37.65211,126.48386],[37.65231,126.48357],[37.65245,126.4833],[37.65253,126.48297],[37.6526,126.48257],[37.65276,126.48151],[37.65286,126.4812],[37.653,126.48092],[37.65329,126.47861],[37.65344,126.47802],[37.65381,126.47743]]},{"id":"481573759222841945","date":"2026-11-07","kind":"야외","city":"서울","name":"서울특별시 러닝","km":6.2,"dur":"00:41:55","dur_s":2515,"pace":"06'45\"","pace_s":405,"hr":158,"tl":61,"md":"11/7","dow":"Sat","mon":11,"route":true,"gain":14,"start":"06:07","path":[[37.52097,126.94092],[37.52076,126.94112],[37.52049,126.94128],[37.52021,126.94139],[37.51993,126.94142],[37.51964,126.94142],[37.51934,126.94143],[37.51906,126.94151],[37.51888,126.94179],[37.51864,126.9421],[37.51838,126.94229],[37.5181,126.94227],[37.51779,126.94307],[37.51788,126.94345],[37.51802,126.94646],[37.51794,126.94683],[37.51785,126.9472],[37.51773,126.94757],[37.5176,126.94792],[37.51747,126.94826],[37.51732,126.9486],[37.51716,126.94892],[37.51697,126.94924],[37.51677,126.94953],[37.51658,126.94985],[37.51642,126.95019],[37.51628,126.95052],[37.51614,126.95083],[37.51604,126.95119],[37.51593,126.95153],[37.51583,126.95189],[37.51573,126.95225],[37.51563,126.95262],[37.51552,126.95303],[37.51532,126.95334],[37.51508,126.95358],[37.51492,126.95382],[37.51473,126.95415],[37.51455,126.95448],[37.51439,126.95483],[37.51427,126.95511],[37.51411,126.95561],[37.51354,126.95797],[37.5133,126.95812],[37.51316,126.9584],[37.51297,126.95874],[37.5128,126.95902],[37.5127,126.95939],[37.51258,126.95973],[37.51244,126.96009],[37.51232,126.96043],[37.51225,126.96072],[37.51208,126.96141],[37.51179,126.96249],[37.51162,126.96293],[37.51147,126.9633],[37.51129,126.96362],[37.5111,126.964],[37.51094,126.96431],[37.51074,126.96468],[37.51057,126.96497],[37.51022,126.96551],[37.50956,126.9651],[37.50976,126.96502],[37.50999,126.9649],[37.51013,126.96473],[37.51028,126.96446],[37.51043,126.9642],[37.51054,126.96389],[37.51066,126.96361],[37.51078,126.96329],[37.51091,126.96293],[37.51103,126.96258],[37.51129,126.96232],[37.51153,126.96197],[37.51168,126.9617],[37.51189,126.96135],[37.51203,126.96103],[37.51228,126.96021],[37.51251,126.95976],[37.51265,126.95945],[37.51276,126.95911],[37.51292,126.95874],[37.51313,126.95847],[37.51329,126.95818],[37.51346,126.95797],[37.51375,126.95742],[37.51404,126.95653],[37.51429,126.95613],[37.51456,126.95472],[37.51484,126.95355],[37.5152,126.95331],[37.51551,126.95299],[37.5156,126.95267],[37.51568,126.95234],[37.51577,126.95199],[37.51587,126.95166],[37.51598,126.95132],[37.51609,126.95095],[37.51622,126.95063],[37.51633,126.95037],[37.51645,126.95009],[37.51659,126.9498],[37.51675,126.94952],[37.51695,126.94924],[37.5171,126.94896],[37.51729,126.94863],[37.51742,126.94835],[37.51754,126.94803],[37.51765,126.94772],[37.51777,126.9474],[37.51787,126.94707],[37.51808,126.9449],[37.51804,126.94448],[37.518,126.94408],[37.51779,126.94251],[37.51801,126.94232],[37.51833,126.94171],[37.51859,126.94162],[37.51887,126.94157],[37.51912,126.94146],[37.5194,126.9414],[37.5197,126.94146],[37.51996,126.94161],[37.52022,126.94173],[37.5205,126.94182],[37.52078,126.94184],[37.52117,126.94274],[37.52138,126.94247],[37.52159,126.94224],[37.52195,126.94183]]},{"id":"481532864700121388","date":"2026-11-05","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":2.8,"dur":"00:19:28","dur_s":1168,"pace":"06'57\"","pace_s":417,"hr":150,"tl":48,"md":"11/5","dow":"Thu","mon":11,"route":false},{"id":"481509686900719619","date":"2026-11-04","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":2.7,"dur":"00:20:07","dur_s":1207,"pace":"07'27\"","pace_s":447,"hr":153,"tl":56,"md":"11/4","dow":"Wed","mon":11,"route":false},{"id":"481439733694628243","date":"2026-11-01","kind":"야외","city":"서울","name":"서울특별시 러닝","km":42.24,"dur":"03:58:25","dur_s":14305,"pace":"05'39\"","pace_s":339,"hr":169,"tl":861,"md":"11/1","dow":"Sun","mon":11,"route":true,"gain":131,"start":"07:54","path":[[37.5693,126.97719],[37.56728,126.97721],[37.56529,126.97732],[37.56321,126.97667],[37.56121,126.97596],[37.56117,126.97803],[37.56181,126.98087],[37.5636,126.9797],[37.5655,126.97886],[37.56649,126.99496],[37.5663,126.99111],[37.56743,126.98281],[37.56849,126.98437],[37.5681,126.99032],[37.56839,126.99403],[37.56876,126.99799],[37.56929,127.00064],[37.57015,127.0176],[37.57133,127.01985],[37.5713,127.02409],[37.57111,127.02635],[37.57187,127.02374],[37.5717,127.01995],[37.57054,127.01767],[37.5699,127.00948],[37.56928,126.99943],[37.56882,126.99675],[37.56856,126.99337],[37.56842,126.98606],[37.56896,126.98335],[37.57022,126.98955],[37.57046,126.99522],[37.57068,126.99805],[37.57093,127.00184],[37.57168,127.01101],[37.57239,127.01369],[37.57317,127.01631],[37.5739,127.01887],[37.5748,127.02144],[37.57484,127.02474],[37.57383,127.03879],[37.57302,127.04137],[37.57196,127.04383],[37.57095,127.04637],[37.56899,127.04982],[37.56746,127.05177],[37.56591,127.05376],[37.56444,127.05579],[37.56298,127.05777],[37.56201,127.06025],[37.56125,127.06544],[37.56081,127.06889],[37.55984,127.0725],[37.55886,127.07494],[37.55791,127.07739],[37.55636,127.07902],[37.55446,127.07796],[37.55238,127.07695],[37.55032,127.07604],[37.5484,127.07491],[37.54648,127.07371],[37.54451,127.07278],[37.54243,127.07183],[37.54035,127.07086],[37.53919,127.07279],[37.5385,127.07532],[37.53788,127.07781],[37.53722,127.08046],[37.53628,127.08368],[37.53421,127.08449],[37.53222,127.08555],[37.53042,127.08694],[37.52857,127.08834],[37.52673,127.08971],[37.52492,127.09113],[37.52309,127.09251],[37.52118,127.09398],[37.5193,127.09541],[37.51636,127.09767],[37.51446,127.09908],[37.5126,127.10049],[37.51079,127.102],[37.50902,127.10359],[37.50744,127.10182],[37.5065,127.09749],[37.50701,127.09432],[37.50718,127.09042],[37.50549,127.08897],[37.50365,127.08744],[37.50182,127.08592],[37.50064,127.08392],[37.4999,127.08138],[37.49912,127.0785],[37.49829,127.076],[37.49755,127.07351],[37.49681,127.07117],[37.49759,127.07374],[37.49836,127.07636],[37.49905,127.08132],[37.49827,127.08394],[37.49744,127.08642],[37.49662,127.08891],[37.49579,127.09138],[37.49497,127.09382],[37.494,127.09607],[37.49215,127.09746],[37.49263,127.09934],[37.4935,127.10167],[37.49428,127.1041],[37.49513,127.10676],[37.49622,127.11022],[37.49715,127.11298],[37.4983,127.11518],[37.49943,127.11721],[37.50052,127.11919],[37.50182,127.12095],[37.5034,127.12273],[37.50542,127.1241],[37.50736,127.1253],[37.50927,127.1265],[37.5112,127.12759],[37.51303,127.12886],[37.51496,127.13011],[37.51684,127.13139],[37.51876,127.13267],[37.52072,127.13359],[37.51903,127.13278],[37.51718,127.13147],[37.51524,127.1302],[37.51328,127.12887],[37.51259,127.12631]]},{"id":"481411197931913317","date":"2026-10-31","kind":"야외","city":"서울","name":"서울특별시 러닝","km":2.5,"dur":"00:16:37","dur_s":997,"pace":"06'39\"","pace_s":399,"hr":147,"tl":25,"md":"10/31","dow":"Sat","mon":10,"route":true,"gain":15,"start":"06:20","path":[[37.52024,126.99426],[37.52012,126.99429],[37.51994,126.99429],[37.5198,126.9943],[37.51963,126.99434],[37.51949,126.99437],[37.51932,126.99439],[37.51916,126.99441],[37.51904,126.99445],[37.5189,126.99452],[37.51879,126.99457],[37.51867,126.99464],[37.51853,126.99471],[37.51842,126.99477],[37.51828,126.99483],[37.51815,126.99488],[37.51804,126.99494],[37.51791,126.995],[37.51778,126.99507],[37.51765,126.99513],[37.51755,126.99518],[37.51744,126.99524],[37.51731,126.9953],[37.51721,126.99535],[37.51709,126.99541],[37.51697,126.99551],[37.51687,126.99559],[37.51676,126.99568],[37.51665,126.99576],[37.51654,126.99582],[37.51642,126.99588],[37.51628,126.99596],[37.51615,126.996],[37.51601,126.99607],[37.51587,126.99613],[37.51576,126.99618],[37.51562,126.99624],[37.51548,126.99631],[37.51534,126.99638],[37.51523,126.99642],[37.5151,126.99647],[37.51497,126.99655],[37.51484,126.9966],[37.51471,126.99665],[37.51458,126.99671],[37.51448,126.99677],[37.51433,126.99683],[37.51419,126.9969],[37.51408,126.99695],[37.51396,126.99701],[37.51382,126.99707],[37.51371,126.99714],[37.51358,126.99721],[37.51345,126.99726],[37.51334,126.9973],[37.51321,126.99736],[37.51308,126.99742],[37.51295,126.99749],[37.51284,126.99753],[37.5127,126.9976],[37.51257,126.99766],[37.51247,126.99771],[37.51235,126.99777],[37.51223,126.99782],[37.51212,126.99788],[37.51199,126.99796],[37.51186,126.99801],[37.51176,126.99806],[37.51161,126.99813],[37.51149,126.9982],[37.51138,126.99824],[37.51117,126.99835],[37.51128,126.9983],[37.51139,126.99825],[37.51152,126.9982],[37.51165,126.99813],[37.51178,126.99807],[37.51189,126.99802],[37.51201,126.99796],[37.51214,126.9979],[37.51225,126.99786],[37.51236,126.99781],[37.51248,126.99774],[37.51258,126.99768],[37.51271,126.9976],[37.51286,126.99752],[37.51296,126.99746],[37.51309,126.9974],[37.51323,126.99734],[37.51334,126.99729],[37.51347,126.99724],[37.51358,126.99718],[37.51371,126.99711],[37.51383,126.99704],[37.51396,126.99697],[37.5141,126.9969],[37.51423,126.99684],[37.51436,126.99677],[37.51448,126.9967],[37.51459,126.99665],[37.51472,126.99661],[37.51483,126.99656],[37.51495,126.99652],[37.51509,126.99645],[37.51522,126.9964],[37.51534,126.99634],[37.51546,126.99626],[37.51559,126.99619],[37.5157,126.99614],[37.51583,126.9961],[37.51596,126.99605],[37.51606,126.99601],[37.51618,126.99596],[37.51629,126.99592],[37.51639,126.99587],[37.51648,126.99581],[37.5166,126.99576],[37.51673,126.99571],[37.51681,126.99567],[37.51695,126.9956],[37.51709,126.99553],[37.51719,126.99548],[37.51733,126.99544],[37.51747,126.99537],[37.51757,126.9953],[37.51767,126.99523],[37.5178,126.99514],[37.5179,126.99509],[37.51801,126.99502],[37.51813,126.99493],[37.5184,126.99477]]},{"id":"481370497488027648","date":"2026-10-29","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.8,"dur":"00:21:04","dur_s":1264,"pace":"05'33\"","pace_s":333,"hr":158,"tl":69,"md":"10/29","dow":"Thu","mon":10,"route":false},{"id":"481300949887909988","date":"2026-10-26","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.25,"dur":"00:23:32","dur_s":1412,"pace":"05'32\"","pace_s":332,"hr":146,"tl":51,"md":"10/26","dow":"Mon","mon":10,"route":false},{"id":"481251451455177008","date":"2026-10-24","kind":"야외","city":"서울","name":"서울특별시 러닝","km":2.64,"dur":"00:20:17","dur_s":1217,"pace":"07'41\"","pace_s":461,"hr":157,"tl":26,"md":"10/24","dow":"Sat","mon":10,"route":true,"gain":13,"start":"06:41","path":[[37.5214,126.94253],[37.52135,126.94259],[37.52129,126.94266],[37.52123,126.94272],[37.52117,126.94279],[37.52088,126.94191],[37.52081,126.94189],[37.52072,126.94189],[37.52064,126.94188],[37.52055,126.94187],[37.52044,126.94184],[37.52037,126.94182],[37.5203,126.9418],[37.5202,126.94176],[37.52013,126.94172],[37.52005,126.94169],[37.51996,126.94165],[37.51988,126.94162],[37.5198,126.94158],[37.51973,126.94154],[37.51963,126.9415],[37.51955,126.94146],[37.51948,126.94144],[37.51939,126.94145],[37.51931,126.94147],[37.51923,126.94149],[37.51913,126.94149],[37.51907,126.94152],[37.51901,126.94157],[37.51892,126.94159],[37.51884,126.9416],[37.51876,126.94161],[37.51865,126.94163],[37.51857,126.94165],[37.5185,126.94168],[37.5184,126.94171],[37.51832,126.94175],[37.51816,126.94228],[37.51808,126.94233],[37.51798,126.94238],[37.51776,126.94301],[37.51777,126.94312],[37.51781,126.94324],[37.51783,126.94334],[37.51786,126.94344],[37.5179,126.94357],[37.51792,126.94367],[37.5181,126.94566],[37.518,126.94656],[37.51798,126.94666],[37.51795,126.94676],[37.51789,126.94707],[37.51786,126.94717],[37.51784,126.94727],[37.51779,126.94739],[37.51775,126.94749],[37.51772,126.94759],[37.51768,126.94769],[37.51764,126.94781],[37.51761,126.94791],[37.51757,126.94801],[37.51752,126.94813],[37.51748,126.94823],[37.51729,126.94859],[37.51731,126.94855],[37.51733,126.94853],[37.51734,126.94849],[37.51736,126.94844],[37.51739,126.94839],[37.51741,126.94834],[37.51744,126.94825],[37.51749,126.94815],[37.51752,126.94805],[37.51757,126.94793],[37.5176,126.94783],[37.51763,126.94773],[37.51767,126.94763],[37.51771,126.9475],[37.51775,126.94741],[37.51779,126.9473],[37.51783,126.94717],[37.51786,126.94706],[37.51788,126.94695],[37.51791,126.94682],[37.51807,126.94497],[37.51806,126.94488],[37.51805,126.94483],[37.51805,126.94478],[37.51803,126.94451],[37.51801,126.94439],[37.51799,126.94429],[37.51798,126.94419],[37.51797,126.94406],[37.51795,126.94396],[37.51794,126.94386],[37.5178,126.94248],[37.51789,126.94239],[37.51797,126.94234],[37.51805,126.94229],[37.51825,126.94176],[37.51833,126.94174],[37.5184,126.9417],[37.51849,126.94166],[37.51857,126.94164],[37.51866,126.94163],[37.51877,126.9416],[37.51885,126.94157],[37.51894,126.94155],[37.51904,126.94153],[37.51912,126.94147],[37.51919,126.94144],[37.5193,126.94143],[37.51939,126.94141],[37.51947,126.9414],[37.51955,126.94141],[37.51965,126.94142],[37.51973,126.94142],[37.51982,126.94141],[37.51992,126.94141],[37.52,126.94141],[37.52009,126.9414],[37.5202,126.94138],[37.52028,126.94136],[37.52036,126.94133],[37.52047,126.94128],[37.52054,126.94124],[37.52062,126.94119],[37.5207,126.9411],[37.52075,126.94103],[37.52083,126.94098],[37.52109,126.94076]]},{"id":"481110169049137156","date":"2026-10-18","kind":"야외","city":"서울","name":"서울특별시 러닝","km":10.25,"dur":"01:05:02","dur_s":3902,"pace":"06'21\"","pace_s":381,"hr":156,"tl":109,"md":"10/18","dow":"Sun","mon":10,"route":true,"gain":53,"start":"05:36","path":[[37.52094,126.94095],[37.52057,126.94118],[37.52021,126.94141],[37.51979,126.94143],[37.51936,126.94145],[37.51893,126.94148],[37.51851,126.94151],[37.5181,126.94165],[37.51762,126.94231],[37.51777,126.94309],[37.51791,126.94361],[37.51798,126.94658],[37.51787,126.94713],[37.51769,126.94764],[37.5175,126.94813],[37.5173,126.94861],[37.51705,126.94906],[37.51679,126.94949],[37.51653,126.94992],[37.51631,126.9504],[37.51612,126.95086],[37.51597,126.95137],[37.51583,126.95186],[37.51568,126.95239],[37.51554,126.95291],[37.51528,126.95339],[37.51489,126.95351],[37.51477,126.95473],[37.51453,126.95533],[37.51431,126.95599],[37.5141,126.95666],[37.51379,126.95727],[37.51351,126.95786],[37.51311,126.95851],[37.51282,126.95895],[37.51266,126.95948],[37.51247,126.95999],[37.51226,126.96042],[37.51209,126.96096],[37.51166,126.96247],[37.51147,126.963],[37.51126,126.9635],[37.51091,126.96392],[37.51061,126.96434],[37.51036,126.9649],[37.51011,126.9654],[37.50951,126.96515],[37.50927,126.96559],[37.50911,126.96611],[37.50893,126.96663],[37.50873,126.96714],[37.50851,126.96754],[37.50822,126.96801],[37.50795,126.96949],[37.50765,126.96978],[37.50736,126.97078],[37.50714,126.97129],[37.50686,126.9723],[37.50654,126.97349],[37.50635,126.97443],[37.50603,126.97734],[37.50575,126.97776],[37.50561,126.97994],[37.50546,126.98093],[37.5056,126.984],[37.50591,126.98553],[37.50636,126.98674],[37.50678,126.9869],[37.50696,126.98699],[37.50656,126.98685],[37.5062,126.98669],[37.50603,126.98618],[37.50592,126.98564],[37.5057,126.98448],[37.5055,126.98112],[37.5055,126.97794],[37.50583,126.97764],[37.50608,126.9772],[37.5064,126.97378],[37.50663,126.97268],[37.50699,126.97156],[37.50721,126.97103],[37.50747,126.97055],[37.50769,126.97008],[37.50798,126.96968],[37.50811,126.96876],[37.50829,126.96822],[37.50842,126.96764],[37.50855,126.96714],[37.50879,126.96666],[37.50903,126.96618],[37.50923,126.96568],[37.50947,126.96519],[37.50989,126.96499],[37.51015,126.96468],[37.51038,126.96419],[37.51064,126.96361],[37.51094,126.96317],[37.51111,126.96276],[37.51136,126.96228],[37.51167,126.96135],[37.51204,126.96084],[37.51233,126.96015],[37.51252,126.95966],[37.51274,126.95916],[37.51297,126.95867],[37.51325,126.95826],[37.51351,126.95795],[37.51368,126.95756],[37.5141,126.95666],[37.51459,126.95479],[37.51516,126.95321],[37.5156,126.95275],[37.51572,126.95226],[37.51587,126.95173],[37.51603,126.95118],[37.51621,126.95064],[37.51644,126.95013],[37.51667,126.94967],[37.51696,126.94922],[37.51719,126.94884],[37.51737,126.94846],[37.51757,126.94797],[37.51775,126.94747],[37.51789,126.94699],[37.51805,126.94464],[37.51798,126.94406],[37.51784,126.94242],[37.51841,126.94171],[37.51882,126.9416],[37.51941,126.94143]]},{"id":"481086715574911178","date":"2026-10-17","kind":"야외","city":"서울","name":"서울특별시 러닝","km":15.02,"dur":"01:23:45","dur_s":5025,"pace":"05'35\"","pace_s":335,"hr":165,"tl":246,"md":"10/17","dow":"Sat","mon":10,"route":true,"gain":0,"start":"05:30","path":[[37.50033,126.99447],[37.501,126.99463],[37.50044,126.99331],[37.5004,126.99477],[37.50099,126.99453],[37.50089,126.99412],[37.50056,126.99332],[37.50022,126.99395],[37.501,126.99458],[37.5009,126.99419],[37.50066,126.99338],[37.5002,126.99385],[37.50101,126.99467],[37.50091,126.99419],[37.50064,126.99336],[37.5002,126.99389],[37.50082,126.99504],[37.50048,126.9933],[37.50044,126.9949],[37.50099,126.99454],[37.50088,126.99407],[37.50053,126.99331],[37.50043,126.99487],[37.50099,126.99454],[37.50044,126.99331],[37.50047,126.99494],[37.50097,126.99446],[37.50088,126.99404],[37.5005,126.9933],[37.50023,126.99401],[37.50099,126.99456],[37.5009,126.99414],[37.50049,126.9933],[37.5004,126.99476],[37.50099,126.99453],[37.50067,126.99339],[37.50022,126.99395],[37.501,126.99458],[37.50064,126.99336],[37.50029,126.99428],[37.50101,126.99465],[37.50067,126.99339],[37.50045,126.99492],[37.50099,126.99454],[37.50089,126.99412],[37.50062,126.99335],[37.50021,126.99393],[37.50081,126.99504],[37.50072,126.99345],[37.50023,126.99402],[37.501,126.99458],[37.50089,126.99412],[37.50062,126.99335],[37.50048,126.99496],[37.50097,126.99445],[37.50087,126.99401],[37.50047,126.99331],[37.50039,126.99474],[37.50099,126.99457],[37.50045,126.99331],[37.50049,126.99497],[37.50097,126.99445],[37.50017,126.9937],[37.50027,126.99417],[37.50036,126.99461],[37.501,126.99458],[37.50066,126.99338],[37.50023,126.994],[37.50033,126.99446],[37.50078,126.99506],[37.50071,126.99343],[37.50022,126.99396],[37.50099,126.99455],[37.50089,126.99411],[37.5005,126.9933],[37.50023,126.994],[37.50099,126.99455],[37.50068,126.9934],[37.50057,126.99504],[37.50095,126.99438],[37.50085,126.99392],[37.50042,126.99331],[37.50081,126.99505],[37.50068,126.9934],[37.50023,126.99399],[37.501,126.99459],[37.50072,126.99345],[37.50038,126.99469],[37.50098,126.99451],[37.50072,126.99345],[37.50037,126.99334],[37.50054,126.99502],[37.50092,126.99425],[37.50082,126.99376],[37.50019,126.99381],[37.501,126.99462],[37.50091,126.99419],[37.50066,126.99338],[37.5002,126.99389],[37.50081,126.99505],[37.50092,126.99424],[37.50082,126.99378],[37.50017,126.99372],[37.50052,126.99501],[37.50095,126.99439],[37.50086,126.99396],[37.50048,126.99331],[37.50074,126.99507],[37.50094,126.99432],[37.50084,126.99389],[37.50037,126.99334],[37.50056,126.99503],[37.50091,126.99421],[37.50062,126.99335],[37.50021,126.99392],[37.5008,126.99505],[37.50091,126.99422],[37.5006,126.99334],[37.50049,126.99498],[37.50097,126.99447],[37.50087,126.99401],[37.50046,126.99331],[37.50046,126.99492],[37.50098,126.9945],[37.50088,126.99404],[37.50052,126.99331],[37.50048,126.99495],[37.50096,126.99443],[37.50036,126.99334],[37.50083,126.99504],[37.50076,126.99354]]},{"id":"481085118914527234","date":"2026-10-17","kind":"야외","city":"서울","name":"서울특별시 러닝","km":2.01,"dur":"00:12:45","dur_s":765,"pace":"06'22\"","pace_s":382,"hr":154,"tl":26,"md":"10/17","dow":"Sat","mon":10,"route":false},{"id":"480999450163052545","date":"2026-10-13","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.05,"dur":"00:22:26","dur_s":1346,"pace":"05'32\"","pace_s":332,"hr":157,"tl":69,"md":"10/13","dow":"Tue","mon":10,"route":false},{"id":"480949471505580136","date":"2026-10-11","kind":"야외","city":"서울","name":"서울특별시 러닝","km":10.86,"dur":"00:53:07","dur_s":3187,"pace":"04'53\"","pace_s":293,"hr":167,"tl":226,"md":"10/11","dow":"Sun","mon":10,"route":false},{"id":"480902504964457048","date":"2026-10-09","kind":"야외","city":"서울","name":"서울특별시 러닝","km":20.01,"dur":"02:12:52","dur_s":7972,"pace":"06'38\"","pace_s":398,"hr":159,"tl":259,"md":"10/9","dow":"Fri","mon":10,"route":false},{"id":"480809494488580096","date":"2026-10-05","kind":"야외","city":"서울","name":"서울특별시 러닝","km":8.0,"dur":"00:55:30","dur_s":3330,"pace":"06'56\"","pace_s":416,"hr":145,"tl":82,"md":"10/5","dow":"Mon","mon":10,"route":false},{"id":"480786934373842952","date":"2026-10-04","kind":"야외","city":"서울","name":"서울특별시 러닝","km":9.94,"dur":"00:53:58","dur_s":3238,"pace":"05'26\"","pace_s":326,"hr":162,"tl":158,"md":"10/4","dow":"Sun","mon":10,"route":false},{"id":"480765117013721395","date":"2026-10-03","kind":"야외","city":"서울","name":"서울특별시 러닝","km":5.48,"dur":"00:38:34","dur_s":2314,"pace":"07'02\"","pace_s":422,"hr":146,"tl":44,"md":"10/3","dow":"Sat","mon":10,"route":false},{"id":"480721143527932104","date":"2026-10-01","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.1,"dur":"00:22:17","dur_s":1337,"pace":"05'26\"","pace_s":326,"hr":154,"tl":66,"md":"10/1","dow":"Thu","mon":10,"route":false},{"id":"480683878781059075","date":"2026-09-29","kind":"야외","city":"서울","name":"서울특별시 러닝","km":6.02,"dur":"00:35:34","dur_s":2134,"pace":"05'55\"","pace_s":355,"hr":149,"tl":75,"md":"9/29","dow":"Tue","mon":9,"route":false},{"id":"480623765615575240","date":"2026-09-27","kind":"야외","city":"서울","name":"서울특별시 러닝","km":30.31,"dur":"03:07:48","dur_s":11268,"pace":"06'12\"","pace_s":372,"hr":164,"tl":371,"md":"9/27","dow":"Sun","mon":9,"route":true,"gain":133,"start":"05:38","path":[[37.52315,126.917],[37.5232,126.91912],[37.52434,126.92049],[37.52554,126.92272],[37.52654,126.92459],[37.52761,126.92633],[37.52927,126.9277],[37.52825,126.92501],[37.5273,126.92327],[37.52631,126.92161],[37.5252,126.91997],[37.52418,126.91824],[37.52258,126.91794],[37.52367,126.91954],[37.52481,126.92107],[37.52611,126.92118],[37.52706,126.92289],[37.52806,126.92458],[37.52927,126.92613],[37.53077,126.92843],[37.53036,126.93053],[37.52894,126.93158],[37.52793,126.93386],[37.52676,126.93573],[37.52549,126.93712],[37.52436,126.93877],[37.52317,126.94023],[37.52198,126.94182],[37.52068,126.94334],[37.522,126.9418],[37.5212,126.94272],[37.52239,126.9411],[37.52357,126.93947],[37.52495,126.93807],[37.5261,126.93644],[37.52736,126.93484],[37.52795,126.9325],[37.52947,126.93127],[37.53079,126.92982],[37.53177,126.92753],[37.53053,126.92768],[37.5293,126.92627],[37.52804,126.92465],[37.52702,126.92291],[37.52602,126.92106],[37.52494,126.91941],[37.5235,126.91719],[37.5232,126.91905],[37.52442,126.92059],[37.52562,126.92289],[37.52663,126.92478],[37.52768,126.92649],[37.52911,126.92784],[37.52828,126.92509],[37.52726,126.92323],[37.52617,126.92148],[37.52502,126.91967],[37.52391,126.91795],[37.52281,126.91848],[37.52401,126.91994],[37.52522,126.9223],[37.52635,126.92406],[37.52737,126.92583],[37.5287,126.92781],[37.52852,126.92543],[37.5275,126.92357],[37.52641,126.92184],[37.52529,126.92008],[37.52417,126.91827],[37.52273,126.91836],[37.52396,126.91985],[37.52516,126.92221],[37.52629,126.92396],[37.52734,126.92577],[37.52863,126.92775],[37.52847,126.92538],[37.52749,126.92354],[37.52637,126.92172],[37.52523,126.92003],[37.52411,126.91819],[37.52261,126.91815],[37.52379,126.91959],[37.52496,126.92198],[37.5261,126.92369],[37.52716,126.92548],[37.52833,126.92722],[37.52888,126.92576],[37.52771,126.92407],[37.52658,126.92236],[37.52555,126.92046],[37.52443,126.9186],[37.52295,126.91714],[37.5235,126.91952],[37.52481,126.92169],[37.52596,126.92343],[37.52738,126.92577],[37.52896,126.92791],[37.52835,126.92524],[37.52726,126.92324],[37.5261,126.92141],[37.52497,126.91955],[37.52365,126.91737],[37.52309,126.91888],[37.52426,126.92035],[37.52548,126.92272],[37.52652,126.92459],[37.52788,126.92674],[37.52919,126.92614],[37.5279,126.92448],[37.52678,126.92264],[37.5257,126.92077],[37.52457,126.91894],[37.52291,126.91717],[37.52368,126.91956],[37.52495,126.92194],[37.52616,126.92378],[37.52724,126.92562],[37.52855,126.92767],[37.5286,126.92548],[37.52751,126.92353],[37.52638,126.92172],[37.52518,126.91993],[37.52399,126.91803],[37.52302,126.9188],[37.5243,126.92044],[37.52559,126.92286],[37.52666,126.92484],[37.5278,126.92669],[37.5293,126.92638],[37.52785,126.92441],[37.52607,126.92137]]},{"id":"480602397339582666","date":"2026-09-26","kind":"야외","city":"인천","name":"인천광역시 러닝","km":10.01,"dur":"01:02:36","dur_s":3756,"pace":"06'15\"","pace_s":375,"hr":161,"tl":156,"md":"9/26","dow":"Sat","mon":9,"route":false},{"id":"480577223200374886","date":"2026-09-25","kind":"야외","city":"성남","name":"성남시 러닝","km":15.63,"dur":"01:36:25","dur_s":5785,"pace":"06'10\"","pace_s":370,"hr":158,"tl":249,"md":"9/25","dow":"Fri","mon":9,"route":false},{"id":"480507527954464769","date":"2026-09-22","kind":"야외","city":"후쿠오카","name":"후쿠오카시 러닝","km":10.01,"dur":"00:54:12","dur_s":3252,"pace":"05'25\"","pace_s":325,"hr":156,"tl":160,"md":"9/22","dow":"Tue","mon":9,"route":false},{"id":"480507874236203013","date":"2026-09-22","kind":"야외","city":"후쿠오카","name":"후쿠오카시 러닝","km":2.02,"dur":"00:13:00","dur_s":780,"pace":"06'27\"","pace_s":387,"hr":146,"tl":27,"md":"9/22","dow":"Tue","mon":9,"route":false},{"id":"480486145199735085","date":"2026-09-21","kind":"야외","city":"후쿠오카","name":"후쿠오카시 러닝","km":6.2,"dur":"00:40:37","dur_s":2437,"pace":"06'33\"","pace_s":393,"hr":142,"tl":73,"md":"9/21","dow":"Mon","mon":9,"route":false},{"id":"480437705744875823","date":"2026-09-19","kind":"야외","city":"서울","name":"서울특별시 러닝","km":10.15,"dur":"01:41:35","dur_s":6095,"pace":"10'00\"","pace_s":600,"hr":136,"tl":110,"md":"9/19","dow":"Sat","mon":9,"route":false},{"id":"480373257082536139","date":"2026-09-16","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.03,"dur":"00:22:24","dur_s":1344,"pace":"05'34\"","pace_s":334,"hr":155,"tl":64,"md":"9/16","dow":"Wed","mon":9,"route":false},{"id":"480358834850791426","date":"2026-09-15","kind":"야외","city":"서울","name":"서울특별시 러닝","km":6.03,"dur":"00:37:34","dur_s":2254,"pace":"06'14\"","pace_s":374,"hr":160,"tl":80,"md":"9/15","dow":"Tue","mon":9,"route":false},{"id":"480299564570542087","date":"2026-09-13","kind":"야외","city":"서울","name":"서울특별시 러닝","km":18.42,"dur":"02:08:07","dur_s":7687,"pace":"06'57\"","pace_s":417,"hr":155,"tl":190,"md":"9/13","dow":"Sun","mon":9,"route":false},{"id":"480277474482094580","date":"2026-09-12","kind":"야외","city":"서울","name":"서울특별시 러닝","km":10.01,"dur":"01:43:19","dur_s":6199,"pace":"10'19\"","pace_s":619,"hr":135,"tl":111,"md":"9/12","dow":"Sat","mon":9,"route":false},{"id":"480242122872619515","date":"2026-09-10","kind":"야외","city":"서울","name":"서울특별시 러닝","km":7.05,"dur":"00:35:21","dur_s":2121,"pace":"05'01\"","pace_s":301,"hr":168,"tl":139,"md":"9/10","dow":"Thu","mon":9,"route":false},{"id":"480234075179745481","date":"2026-09-10","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.85,"dur":"00:23:03","dur_s":1383,"pace":"05'59\"","pace_s":359,"hr":146,"tl":51,"md":"9/10","dow":"Thu","mon":9,"route":false},{"id":"480210847451349197","date":"2026-09-09","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.11,"dur":"00:21:44","dur_s":1304,"pace":"05'18\"","pace_s":318,"hr":156,"tl":67,"md":"9/9","dow":"Wed","mon":9,"route":false},{"id":"480187666170675302","date":"2026-09-08","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.23,"dur":"00:22:56","dur_s":1376,"pace":"05'25\"","pace_s":325,"hr":155,"tl":65,"md":"9/8","dow":"Tue","mon":9,"route":false},{"id":"480135887127085058","date":"2026-09-06","kind":"야외","city":"서울","name":"서울특별시 러닝","km":8.34,"dur":"00:57:07","dur_s":3427,"pace":"06'51\"","pace_s":411,"hr":157,"tl":84,"md":"9/6","dow":"Sun","mon":9,"route":false},{"id":"480117576599371979","date":"2026-09-05","kind":"야외","city":"철원","name":"철원군 러닝","km":21.23,"dur":"01:59:43","dur_s":7183,"pace":"05'38\"","pace_s":338,"hr":169,"tl":435,"md":"9/5","dow":"Sat","mon":9,"route":false},{"id":"480048300932759953","date":"2026-09-02","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.72,"dur":"00:20:05","dur_s":1205,"pace":"05'24\"","pace_s":324,"hr":150,"tl":51,"md":"9/2","dow":"Wed","mon":9,"route":false},{"id":"480002157681082370","date":"2026-08-31","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.08,"dur":"00:22:07","dur_s":1327,"pace":"05'26\"","pace_s":326,"hr":153,"tl":59,"md":"8/31","dow":"Mon","mon":8,"route":false},{"id":"479973012303544820","date":"2026-08-30","kind":"트랙","city":"하남 트랙","name":"하남시 트랙 러닝","km":10.01,"dur":"00:49:59","dur_s":2999,"pace":"05'00\"","pace_s":300,"hr":179,"tl":222,"md":"8/30","dow":"Sun","mon":8,"route":false},{"id":"479973948598026550","date":"2026-08-30","kind":"트랙","city":"하남 트랙","name":"하남시 트랙 러닝","km":5.03,"dur":"00:29:42","dur_s":1782,"pace":"05'54\"","pace_s":354,"hr":162,"tl":60,"md":"8/30","dow":"Sun","mon":8,"route":false},{"id":"479972054794272869","date":"2026-08-30","kind":"야외","city":"하남","name":"하남시 러닝","km":2.05,"dur":"00:12:51","dur_s":771,"pace":"06'16\"","pace_s":376,"hr":155,"tl":22,"md":"8/30","dow":"Sun","mon":8,"route":false},{"id":"479973948598026549","date":"2026-08-30","kind":"야외","city":"하남","name":"하남시 러닝","km":0.76,"dur":"00:05:04","dur_s":304,"pace":"06'40\"","pace_s":400,"hr":156,"tl":18,"md":"8/30","dow":"Sun","mon":8,"route":false},{"id":"479972054794272870","date":"2026-08-30","kind":"야외","city":"하남","name":"하남시 러닝","km":0.41,"dur":"00:01:58","dur_s":118,"pace":"04'52\"","pace_s":292,"hr":149,"tl":11,"md":"8/30","dow":"Sun","mon":8,"route":false},{"id":"479951819053760719","date":"2026-08-29","kind":"야외","city":"서울","name":"서울특별시 러닝","km":15.03,"dur":"01:36:58","dur_s":5818,"pace":"06'27\"","pace_s":387,"hr":152,"tl":214,"md":"8/29","dow":"Sat","mon":8,"route":false},{"id":"479932435054755943","date":"2026-08-28","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":5.09,"dur":"00:26:28","dur_s":1588,"pace":"05'12\"","pace_s":312,"hr":159,"tl":87,"md":"8/28","dow":"Fri","mon":8,"route":false},{"id":"479871798177988812","date":"2026-08-25","kind":"야외","city":"서울","name":"서울특별시 러닝","km":6.03,"dur":"00:33:10","dur_s":1990,"pace":"05'30\"","pace_s":330,"hr":169,"tl":102,"md":"8/25","dow":"Tue","mon":8,"route":false},{"id":"479848383358468296","date":"2026-08-24","kind":"야외","city":"서울","name":"서울특별시 러닝","km":5.45,"dur":"00:48:50","dur_s":2930,"pace":"08'57\"","pace_s":537,"hr":147,"tl":133,"md":"8/24","dow":"Mon","mon":8,"route":false},{"id":"479812270459748757","date":"2026-08-23","kind":"야외","city":"서울","name":"서울특별시 러닝","km":6.23,"dur":"00:44:22","dur_s":2662,"pace":"07'07\"","pace_s":427,"hr":159,"tl":59,"md":"8/23","dow":"Sun","mon":8,"route":false},{"id":"479788968120975463","date":"2026-08-22","kind":"야외","city":"서울","name":"서울특별시 러닝","km":23.61,"dur":"02:36:40","dur_s":9400,"pace":"06'38\"","pace_s":398,"hr":160,"tl":306,"md":"8/22","dow":"Sat","mon":8,"route":false},{"id":"479723820708561097","date":"2026-08-19","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.1,"dur":"00:22:14","dur_s":1334,"pace":"05'25\"","pace_s":325,"hr":145,"tl":46,"md":"8/19","dow":"Wed","mon":8,"route":false},{"id":"479683007244959847","date":"2026-08-17","kind":"야외","city":"서울","name":"서울특별시 러닝","km":11.08,"dur":"01:04:56","dur_s":3896,"pace":"05'52\"","pace_s":352,"hr":165,"tl":151,"md":"8/17","dow":"Mon","mon":8,"route":false},{"id":"479626990408728678","date":"2026-08-15","kind":"야외","city":"제주","name":"제주시 러닝","km":8.15,"dur":"01:02:35","dur_s":3755,"pace":"07'41\"","pace_s":461,"hr":154,"tl":124,"md":"8/15","dow":"Sat","mon":8,"route":false},{"id":"479627424194134016","date":"2026-08-15","kind":"야외","city":"제주","name":"제주시 러닝","km":2.02,"dur":"00:12:55","dur_s":775,"pace":"06'24\"","pace_s":384,"hr":154,"tl":37,"md":"8/15","dow":"Sat","mon":8,"route":false},{"id":"479601238321692874","date":"2026-08-14","kind":"트레일","city":"제주 트레일","name":"제주시 트레일 러닝","km":19.88,"dur":"07:24:54","dur_s":26694,"pace":"22'23\"","pace_s":1343,"hr":113,"tl":152,"md":"8/14","dow":"Fri","mon":8,"route":false},{"id":"479579481896419529","date":"2026-08-13","kind":"트레일","city":"서귀포 트레일","name":"서귀포시 트레일 러닝","km":6.53,"dur":"00:59:11","dur_s":3551,"pace":"09'04\"","pace_s":544,"hr":143,"tl":101,"md":"8/13","dow":"Thu","mon":8,"route":false},{"id":"479556738163441765","date":"2026-08-12","kind":"야외","city":"서귀포","name":"서귀포시 러닝","km":10.41,"dur":"01:19:08","dur_s":4748,"pace":"07'36\"","pace_s":456,"hr":149,"tl":164,"md":"8/12","dow":"Wed","mon":8,"route":false},{"id":"479533851620704360","date":"2026-08-11","kind":"야외","city":"제주","name":"제주시 러닝","km":10.04,"dur":"01:02:46","dur_s":3766,"pace":"06'15\"","pace_s":375,"hr":160,"tl":140,"md":"8/11","dow":"Tue","mon":8,"route":false},{"id":"479511936822706283","date":"2026-08-10","kind":"야외","city":"제주","name":"제주시 러닝","km":12.84,"dur":"01:36:09","dur_s":5769,"pace":"07'29\"","pace_s":449,"hr":147,"tl":146,"md":"8/10","dow":"Mon","mon":8,"route":false},{"id":"479516956567830530","date":"2026-08-10","kind":"트레일","city":"제주 트레일","name":"제주시 트레일 러닝","km":0.99,"dur":"00:25:29","dur_s":1529,"pace":"25'42\"","pace_s":1542,"hr":95,"tl":3,"md":"8/10","dow":"Mon","mon":8,"route":false},{"id":"479493769106849893","date":"2026-08-09","kind":"트레일","city":"목포 트레일","name":"목포시 트레일 러닝","km":2.01,"dur":"01:03:06","dur_s":3786,"pace":"31'20\"","pace_s":1880,"hr":94,"tl":5,"md":"8/9","dow":"Sun","mon":8,"route":false},{"id":"479464034515582978","date":"2026-08-08","kind":"야외","city":"서울","name":"서울특별시 러닝","km":10.15,"dur":"01:08:34","dur_s":4114,"pace":"06'45\"","pace_s":405,"hr":148,"tl":147,"md":"8/8","dow":"Sat","mon":8,"route":false},{"id":"479454194477072785","date":"2026-08-07","kind":"야외","city":"서울","name":"서울특별시 러닝","km":6.01,"dur":"00:37:37","dur_s":2257,"pace":"06'15\"","pace_s":375,"hr":153,"tl":79,"md":"8/7","dow":"Fri","mon":8,"route":false},{"id":"479384847937208325","date":"2026-08-04","kind":"야외","city":"서울","name":"서울특별시 러닝","km":4.52,"dur":"00:39:03","dur_s":2343,"pace":"08'39\"","pace_s":519,"hr":152,"tl":76,"md":"8/4","dow":"Tue","mon":8,"route":false},{"id":"479346984847704265","date":"2026-08-03","kind":"야외","city":"서울","name":"서울특별시 러닝","km":14.02,"dur":"01:26:23","dur_s":5183,"pace":"06'10\"","pace_s":370,"hr":162,"tl":226,"md":"8/3","dow":"Mon","mon":8,"route":false},{"id":"479324690739920896","date":"2026-08-02","kind":"야외","city":"서울","name":"서울특별시 러닝","km":11.01,"dur":"01:46:57","dur_s":6417,"pace":"09'43\"","pace_s":583,"hr":147,"tl":133,"md":"8/2","dow":"Sun","mon":8,"route":false},{"id":"479310811284668620","date":"2026-08-01","kind":"야외","city":"인천","name":"인천광역시 러닝","km":7.01,"dur":"00:50:01","dur_s":3001,"pace":"07'08\"","pace_s":428,"hr":156,"tl":95,"md":"8/1","dow":"Sat","mon":8,"route":false},{"id":"479162403525787954","date":"2026-07-26","kind":"야외","city":"서울","name":"서울특별시 러닝","km":20.3,"dur":"02:14:04","dur_s":8044,"pace":"06'36\"","pace_s":396,"hr":164,"tl":308,"md":"7/26","dow":"Sun","mon":7,"route":false},{"id":"479139230568710545","date":"2026-07-25","kind":"야외","city":"서울","name":"서울특별시 러닝","km":17.53,"dur":"01:58:16","dur_s":7096,"pace":"06'45\"","pace_s":405,"hr":163,"tl":299,"md":"7/25","dow":"Sat","mon":7,"route":false},{"id":"478983232249954407","date":"2026-07-18","kind":"야외","city":"서울","name":"서울특별시 러닝","km":5.4,"dur":"00:31:35","dur_s":1895,"pace":"05'51\"","pace_s":351,"hr":147,"tl":82,"md":"7/18","dow":"Sat","mon":7,"route":false},{"id":"478953727972114436","date":"2026-07-17","kind":"야외","city":"서울","name":"서울특별시 러닝","km":24.24,"dur":"02:32:54","dur_s":9174,"pace":"06'18\"","pace_s":378,"hr":166,"tl":326,"md":"7/17","dow":"Fri","mon":7,"route":false},{"id":"478872854815866982","date":"2026-07-13","kind":"야외","city":"서울","name":"서울특별시 러닝","km":7.52,"dur":"00:45:38","dur_s":2738,"pace":"06'04\"","pace_s":364,"hr":162,"tl":168,"md":"7/13","dow":"Mon","mon":7,"route":false},{"id":"478839008057655598","date":"2026-07-12","kind":"야외","city":"서울","name":"서울특별시 러닝","km":9.0,"dur":"01:01:30","dur_s":3690,"pace":"06'50\"","pace_s":410,"hr":150,"tl":132,"md":"7/12","dow":"Sun","mon":7,"route":false},{"id":"478711918903722292","date":"2026-07-06","kind":"야외","city":"서울","name":"서울특별시 러닝","km":11.06,"dur":"01:07:09","dur_s":4029,"pace":"06'04\"","pace_s":364,"hr":169,"tl":191,"md":"7/6","dow":"Mon","mon":7,"route":false},{"id":"478677533663985770","date":"2026-07-05","kind":"트레일","city":"인천 트레일","name":"인천광역시 트레일 러닝","km":5.11,"dur":"02:17:44","dur_s":8264,"pace":"26'56\"","pace_s":1616,"hr":122,"tl":81,"md":"7/5","dow":"Sun","mon":7,"route":false},{"id":"478652621240958983","date":"2026-07-04","kind":"야외","city":"서울","name":"서울특별시 러닝","km":10.05,"dur":"00:59:59","dur_s":3599,"pace":"05'58\"","pace_s":358,"hr":157,"tl":127,"md":"7/4","dow":"Sat","mon":7,"route":false},{"id":"478349088927023104","date":"2026-06-21","kind":"야외","city":"서울","name":"서울특별시 러닝","km":0.29,"dur":"00:02:52","dur_s":172,"pace":"09'46\"","pace_s":586,"hr":129,"tl":1,"md":"6/21","dow":"Sun","mon":6,"route":false},{"id":"478328806738788555","date":"2026-06-20","kind":"야외","city":"남양주","name":"남양주시 러닝","km":10.03,"dur":"00:48:55","dur_s":2935,"pace":"04'53\"","pace_s":293,"hr":167,"tl":258,"md":"6/20","dow":"Sat","mon":6,"route":false},{"id":"478327769502089218","date":"2026-06-20","kind":"야외","city":"경기","name":"경기도 러닝","km":0.59,"dur":"00:04:48","dur_s":288,"pace":"08'04\"","pace_s":484,"hr":151,"tl":9,"md":"6/20","dow":"Sat","mon":6,"route":false},{"id":"478286129257284184","date":"2026-06-18","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.5,"dur":"00:24:52","dur_s":1492,"pace":"05'31\"","pace_s":331,"hr":162,"tl":89,"md":"6/18","dow":"Thu","mon":6,"route":false},{"id":"478224220793372773","date":"2026-06-15","kind":"야외","city":"서울","name":"서울특별시 러닝","km":7.03,"dur":"00:37:13","dur_s":2233,"pace":"05'18\"","pace_s":318,"hr":154,"tl":133,"md":"6/15","dow":"Mon","mon":6,"route":false},{"id":"478189051990540393","date":"2026-06-14","kind":"야외","city":"서울","name":"서울특별시 러닝","km":2.54,"dur":"00:14:30","dur_s":870,"pace":"05'42\"","pace_s":342,"hr":160,"tl":56,"md":"6/14","dow":"Sun","mon":6,"route":false},{"id":"478165099765334118","date":"2026-06-13","kind":"야외","city":"서울","name":"서울특별시 러닝","km":21.32,"dur":"02:06:49","dur_s":7609,"pace":"05'57\"","pace_s":357,"hr":165,"tl":325,"md":"6/13","dow":"Sat","mon":6,"route":false},{"id":"478132327017382095","date":"2026-06-11","kind":"야외","city":"서울","name":"서울특별시 러닝","km":7.01,"dur":"00:34:28","dur_s":2068,"pace":"04'55\"","pace_s":295,"hr":170,"tl":184,"md":"6/11","dow":"Thu","mon":6,"route":false},{"id":"478027431297450088","date":"2026-06-07","kind":"야외","city":"서울","name":"서울특별시 러닝","km":21.23,"dur":"02:05:19","dur_s":7519,"pace":"05'54\"","pace_s":354,"hr":160,"tl":348,"md":"6/7","dow":"Sun","mon":6,"route":false},{"id":"478003579467104257","date":"2026-06-06","kind":"야외","city":"서울","name":"서울특별시 러닝","km":7.55,"dur":"01:07:05","dur_s":4025,"pace":"08'53\"","pace_s":533,"hr":141,"tl":151,"md":"6/6","dow":"Sat","mon":6,"route":false},{"id":"477932669823385703","date":"2026-06-03","kind":"야외","city":"서울","name":"서울특별시 러닝","km":10.03,"dur":"01:28:58","dur_s":5338,"pace":"08'52\"","pace_s":532,"hr":145,"tl":169,"md":"6/3","dow":"Wed","mon":6,"route":false},{"id":"477863574268575748","date":"2026-05-31","kind":"야외","city":"서울","name":"서울특별시 러닝","km":15.5,"dur":"01:28:07","dur_s":5287,"pace":"05'41\"","pace_s":341,"hr":161,"tl":407,"md":"5/31","dow":"Sun","mon":5,"route":false},{"id":"477874800251928579","date":"2026-05-31","kind":"야외","city":"인천","name":"인천광역시 러닝","km":2.3,"dur":"00:15:23","dur_s":923,"pace":"06'40\"","pace_s":400,"hr":134,"tl":25,"md":"5/31","dow":"Sun","mon":5,"route":false},{"id":"477840322123039021","date":"2026-05-30","kind":"야외","city":"서울","name":"서울특별시 러닝","km":8.76,"dur":"01:22:04","dur_s":4924,"pace":"09'22\"","pace_s":562,"hr":143,"tl":141,"md":"5/30","dow":"Sat","mon":5,"route":false},{"id":"477830751604211818","date":"2026-05-29","kind":"야외","city":"서울","name":"서울특별시 러닝","km":5.02,"dur":"00:32:39","dur_s":1959,"pace":"06'30\"","pace_s":390,"hr":144,"tl":58,"md":"5/29","dow":"Fri","mon":5,"route":false},{"id":"477807657296625667","date":"2026-05-28","kind":"야외","city":"서울","name":"서울특별시 러닝","km":8.01,"dur":"00:45:24","dur_s":2724,"pace":"05'40\"","pace_s":340,"hr":158,"tl":152,"md":"5/28","dow":"Thu","mon":5,"route":false},{"id":"477783957130215528","date":"2026-05-27","kind":"야외","city":"서울","name":"서울특별시 러닝","km":6.03,"dur":"00:35:06","dur_s":2106,"pace":"05'49\"","pace_s":349,"hr":149,"tl":91,"md":"5/27","dow":"Wed","mon":5,"route":false},{"id":"477752682778492931","date":"2026-05-26","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.2,"dur":"00:25:43","dur_s":1543,"pace":"06'07\"","pace_s":367,"hr":148,"tl":56,"md":"5/26","dow":"Tue","mon":5,"route":false},{"id":"477724850046140520","date":"2026-05-25","kind":"야외","city":"서울","name":"서울특별시 러닝","km":14.5,"dur":"01:33:56","dur_s":5636,"pace":"06'29\"","pace_s":389,"hr":161,"tl":277,"md":"5/25","dow":"Mon","mon":5,"route":false},{"id":"477707228076343405","date":"2026-05-24","kind":"야외","city":"서울","name":"서울특별시 러닝","km":8.15,"dur":"00:50:34","dur_s":3034,"pace":"06'12\"","pace_s":372,"hr":158,"tl":135,"md":"5/24","dow":"Sun","mon":5,"route":false},{"id":"477678066846433583","date":"2026-05-23","kind":"야외","city":"서울","name":"서울특별시 러닝","km":11.04,"dur":"01:03:24","dur_s":3804,"pace":"05'44\"","pace_s":344,"hr":163,"tl":188,"md":"5/23","dow":"Sat","mon":5,"route":false},{"id":"477668446132273553","date":"2026-05-22","kind":"야외","city":"서울","name":"서울특별시 러닝","km":4.5,"dur":"00:32:04","dur_s":1924,"pace":"07'08\"","pace_s":428,"hr":151,"tl":64,"md":"5/22","dow":"Fri","mon":5,"route":false},{"id":"477636722151161860","date":"2026-05-21","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.5,"dur":"00:24:47","dur_s":1487,"pace":"05'30\"","pace_s":330,"hr":161,"tl":84,"md":"5/21","dow":"Thu","mon":5,"route":false},{"id":"477613547847713070","date":"2026-05-20","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.05,"dur":"00:21:57","dur_s":1317,"pace":"05'25\"","pace_s":325,"hr":158,"tl":67,"md":"5/20","dow":"Wed","mon":5,"route":false},{"id":"477598550895657262","date":"2026-05-19","kind":"야외","city":"서울","name":"서울특별시 러닝","km":5.01,"dur":"00:29:26","dur_s":1766,"pace":"05'53\"","pace_s":353,"hr":157,"tl":83,"md":"5/19","dow":"Tue","mon":5,"route":false},{"id":"477572142483931142","date":"2026-05-18","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.04,"dur":"00:22:37","dur_s":1357,"pace":"05'36\"","pace_s":336,"hr":150,"tl":53,"md":"5/18","dow":"Mon","mon":5,"route":false},{"id":"477538710739517442","date":"2026-05-17","kind":"야외","city":"서울","name":"서울특별시 러닝","km":11.0,"dur":"01:42:07","dur_s":6127,"pace":"09'17\"","pace_s":557,"hr":147,"tl":150,"md":"5/17","dow":"Sun","mon":5,"route":false},{"id":"477515929685622890","date":"2026-05-16","kind":"야외","city":"서울","name":"서울특별시 러닝","km":17.01,"dur":"01:38:02","dur_s":5882,"pace":"05'46\"","pace_s":346,"hr":161,"tl":301,"md":"5/16","dow":"Sat","mon":5,"route":false},{"id":"477497530056212485","date":"2026-05-15","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.3,"dur":"00:24:41","dur_s":1481,"pace":"05'44\"","pace_s":344,"hr":162,"tl":86,"md":"5/15","dow":"Fri","mon":5,"route":false},{"id":"477483044731650256","date":"2026-05-14","kind":"야외","city":"서울","name":"서울특별시 러닝","km":5.02,"dur":"00:28:38","dur_s":1718,"pace":"05'43\"","pace_s":343,"hr":157,"tl":92,"md":"5/14","dow":"Thu","mon":5,"route":false},{"id":"477458885001642086","date":"2026-05-13","kind":"야외","city":"서울","name":"서울특별시 러닝","km":7.01,"dur":"00:40:20","dur_s":2420,"pace":"05'45\"","pace_s":345,"hr":159,"tl":127,"md":"5/13","dow":"Wed","mon":5,"route":false},{"id":"477428014118895717","date":"2026-05-12","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.28,"dur":"00:27:08","dur_s":1628,"pace":"06'20\"","pace_s":380,"hr":156,"tl":85,"md":"5/12","dow":"Tue","mon":5,"route":false},{"id":"477404807617872078","date":"2026-05-11","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.06,"dur":"00:23:18","dur_s":1398,"pace":"05'44\"","pace_s":344,"hr":161,"tl":79,"md":"5/11","dow":"Mon","mon":5,"route":false},{"id":"477376897846640747","date":"2026-05-10","kind":"야외","city":"서울","name":"서울특별시 러닝","km":8.45,"dur":"00:50:51","dur_s":3051,"pace":"06'01\"","pace_s":361,"hr":151,"tl":128,"md":"5/10","dow":"Sun","mon":5,"route":false},{"id":"477357746038013954","date":"2026-05-09","kind":"야외","city":"서울","name":"서울특별시 러닝","km":9.01,"dur":"00:55:05","dur_s":3305,"pace":"06'07\"","pace_s":367,"hr":155,"tl":160,"md":"5/9","dow":"Sat","mon":5,"route":false},{"id":"477335228598222849","date":"2026-05-08","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":5.24,"dur":"00:29:32","dur_s":1772,"pace":"05'38\"","pace_s":338,"hr":156,"tl":84,"md":"5/8","dow":"Fri","mon":5,"route":false},{"id":"477311916589482089","date":"2026-05-07","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.1,"dur":"00:17:40","dur_s":1060,"pace":"05'42\"","pace_s":342,"hr":160,"tl":58,"md":"5/7","dow":"Thu","mon":5,"route":false},{"id":"477296076762677451","date":"2026-05-06","kind":"야외","city":"서울","name":"서울특별시 러닝","km":6.55,"dur":"00:38:36","dur_s":2316,"pace":"05'53\"","pace_s":353,"hr":160,"tl":103,"md":"5/6","dow":"Wed","mon":5,"route":false},{"id":"477264754371494193","date":"2026-05-05","kind":"야외","city":"성남","name":"성남시 러닝","km":6.22,"dur":"01:06:49","dur_s":4009,"pace":"10'44\"","pace_s":644,"hr":145,"tl":96,"md":"5/5","dow":"Tue","mon":5,"route":false},{"id":"477241096886321356","date":"2026-05-04","kind":"야외","city":"서울","name":"서울특별시 러닝","km":11.69,"dur":"01:10:49","dur_s":4249,"pace":"06'03\"","pace_s":363,"hr":160,"tl":225,"md":"5/4","dow":"Mon","mon":5,"route":false},{"id":"477227686924681217","date":"2026-05-03","kind":"야외","city":"서울","name":"서울특별시 러닝","km":5.52,"dur":"00:32:26","dur_s":1946,"pace":"05'53\"","pace_s":353,"hr":160,"tl":83,"md":"5/3","dow":"Sun","mon":5,"route":false},{"id":"477198362230161511","date":"2026-05-02","kind":"야외","city":"인천","name":"인천광역시 러닝","km":9.0,"dur":"00:50:23","dur_s":3023,"pace":"05'36\"","pace_s":336,"hr":169,"tl":205,"md":"5/2","dow":"Sat","mon":5,"route":false},{"id":"477166494646566914","date":"2026-05-01","kind":"야외","city":"서울","name":"서울특별시 러닝","km":7.11,"dur":"00:46:02","dur_s":2762,"pace":"06'28\"","pace_s":388,"hr":160,"tl":102,"md":"5/1","dow":"Fri","mon":5,"route":false},{"id":"477054046755127303","date":"2026-04-26","kind":"야외","city":"서울","name":"서울특별시 러닝","km":21.09,"dur":"02:00:25","dur_s":7225,"pace":"05'43\"","pace_s":343,"hr":172,"tl":571,"md":"4/26","dow":"Sun","mon":4,"route":false},{"id":"477004246888251399","date":"2026-04-24","kind":"야외","city":"서울","name":"서울특별시 러닝","km":8.01,"dur":"00:49:41","dur_s":2981,"pace":"06'12\"","pace_s":372,"hr":155,"tl":129,"md":"4/24","dow":"Fri","mon":4,"route":false},{"id":"476890250929537128","date":"2026-04-19","kind":"야외","city":"서울","name":"서울특별시 러닝","km":16.01,"dur":"01:32:26","dur_s":5546,"pace":"05'46\"","pace_s":346,"hr":167,"tl":285,"md":"4/19","dow":"Sun","mon":4,"route":false},{"id":"476825026482438346","date":"2026-04-16","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.13,"dur":"00:17:12","dur_s":1032,"pace":"05'30\"","pace_s":330,"hr":159,"tl":58,"md":"4/16","dow":"Thu","mon":4,"route":false},{"id":"476778561120796772","date":"2026-04-14","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.1,"dur":"00:23:48","dur_s":1428,"pace":"05'48\"","pace_s":348,"hr":160,"tl":82,"md":"4/14","dow":"Tue","mon":4,"route":false},{"id":"476729419168252013","date":"2026-04-12","kind":"야외","city":"서울","name":"서울특별시 러닝","km":13.01,"dur":"01:22:27","dur_s":4947,"pace":"06'20\"","pace_s":380,"hr":158,"tl":245,"md":"4/12","dow":"Sun","mon":4,"route":false},{"id":"476704448775749637","date":"2026-04-11","kind":"야외","city":"서울","name":"서울특별시 러닝","km":6.0,"dur":"00:35:32","dur_s":2132,"pace":"05'55\"","pace_s":355,"hr":154,"tl":111,"md":"4/11","dow":"Sat","mon":4,"route":false},{"id":"476690084515577959","date":"2026-04-10","kind":"야외","city":"서울","name":"서울특별시 러닝","km":7.03,"dur":"00:45:23","dur_s":2723,"pace":"06'27\"","pace_s":387,"hr":158,"tl":174,"md":"4/10","dow":"Fri","mon":4,"route":false},{"id":"476622938081099776","date":"2026-04-07","kind":"야외","city":"서울","name":"서울특별시 러닝","km":5.01,"dur":"00:29:31","dur_s":1771,"pace":"05'54\"","pace_s":354,"hr":159,"tl":87,"md":"4/7","dow":"Tue","mon":4,"route":false},{"id":"476543267243065458","date":"2026-04-04","kind":"야외","city":"경주","name":"경주시 러닝","km":9.92,"dur":"00:54:05","dur_s":3245,"pace":"05'27\"","pace_s":327,"hr":176,"tl":258,"md":"4/4","dow":"Sat","mon":4,"route":false},{"id":"476485481410887784","date":"2026-04-01","kind":"야외","city":"서울","name":"서울특별시 러닝","km":5.01,"dur":"00:27:48","dur_s":1668,"pace":"05'33\"","pace_s":333,"hr":162,"tl":106,"md":"4/1","dow":"Wed","mon":4,"route":false},{"id":"476403304446853120","date":"2026-03-29","kind":"야외","city":"서울","name":"서울특별시 러닝","km":10.01,"dur":"00:53:28","dur_s":3208,"pace":"05'21\"","pace_s":321,"hr":178,"tl":269,"md":"3/29","dow":"Sun","mon":3,"route":false},{"id":"476241913805046061","date":"2026-03-22","kind":"야외","city":"인천","name":"인천광역시 러닝","km":10.01,"dur":"01:00:30","dur_s":3630,"pace":"06'03\"","pace_s":363,"hr":166,"tl":197,"md":"3/22","dow":"Sun","mon":3,"route":false},{"id":"476220582860456136","date":"2026-03-21","kind":"야외","city":"서울","name":"서울특별시 러닝","km":3.45,"dur":"00:42:52","dur_s":2572,"pace":"12'26\"","pace_s":746,"hr":129,"tl":35,"md":"3/21","dow":"Sat","mon":3,"route":false},{"id":"476146153224700007","date":"2026-03-18","kind":"야외","city":"서울","name":"서울특별시 러닝","km":8.04,"dur":"01:00:34","dur_s":3634,"pace":"07'32\"","pace_s":452,"hr":154,"tl":128,"md":"3/18","dow":"Wed","mon":3,"route":false},{"id":"476057185651032074","date":"2026-03-14","kind":"야외","city":"서울","name":"서울특별시 러닝","km":4.63,"dur":"00:34:55","dur_s":2095,"pace":"07'32\"","pace_s":452,"hr":150,"tl":72,"md":"3/14","dow":"Sat","mon":3,"route":false},{"id":"475918612836679687","date":"2026-03-08","kind":"야외","city":"서울","name":"서울특별시 러닝","km":6.01,"dur":"00:33:44","dur_s":2024,"pace":"05'37\"","pace_s":337,"hr":165,"tl":128,"md":"3/8","dow":"Sun","mon":3,"route":false},{"id":"475850835826344036","date":"2026-03-05","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.52,"dur":"00:17:55","dur_s":1075,"pace":"05'05\"","pace_s":305,"hr":164,"tl":68,"md":"3/5","dow":"Thu","mon":3,"route":false},{"id":"475804441855950948","date":"2026-03-03","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.22,"dur":"00:19:33","dur_s":1173,"pace":"06'04\"","pace_s":364,"hr":153,"tl":54,"md":"3/3","dow":"Tue","mon":3,"route":false},{"id":"475730783435259908","date":"2026-02-28","kind":"야외","city":"서울","name":"서울특별시 러닝","km":11.26,"dur":"01:24:38","dur_s":5078,"pace":"07'31\"","pace_s":451,"hr":149,"tl":168,"md":"2/28","dow":"Sat","mon":2,"route":false},{"id":"475688442586497127","date":"2026-02-26","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.32,"dur":"00:19:42","dur_s":1182,"pace":"05'56\"","pace_s":356,"hr":165,"tl":77,"md":"2/26","dow":"Thu","mon":2,"route":false},{"id":"475665282770173954","date":"2026-02-25","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.8,"dur":"00:23:04","dur_s":1384,"pace":"06'04\"","pace_s":364,"hr":161,"tl":82,"md":"2/25","dow":"Wed","mon":2,"route":false},{"id":"475642107663515651","date":"2026-02-24","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.2,"dur":"00:20:59","dur_s":1259,"pace":"06'33\"","pace_s":393,"hr":160,"tl":69,"md":"2/24","dow":"Tue","mon":2,"route":false},{"id":"475475956851572939","date":"2026-02-17","kind":"야외","city":"타기그","name":"타기그 러닝","km":5.19,"dur":"00:34:12","dur_s":2052,"pace":"06'35\"","pace_s":395,"hr":153,"tl":75,"md":"2/17","dow":"Tue","mon":2,"route":false},{"id":"475428389296046080","date":"2026-02-15","kind":"야외","city":"서울","name":"서울특별시 러닝","km":13.01,"dur":"01:28:19","dur_s":5299,"pace":"06'47\"","pace_s":407,"hr":167,"tl":237,"md":"2/15","dow":"Sun","mon":2,"route":false},{"id":"475413815924654083","date":"2026-02-14","kind":"야외","city":"인천","name":"인천광역시 러닝","km":5.02,"dur":"00:28:16","dur_s":1696,"pace":"05'38\"","pace_s":338,"hr":168,"tl":98,"md":"2/14","dow":"Sat","mon":2,"route":false},{"id":"475414132410056710","date":"2026-02-14","kind":"야외","city":"인천","name":"인천광역시 러닝","km":1.22,"dur":"00:08:19","dur_s":499,"pace":"06'48\"","pace_s":408,"hr":147,"tl":17,"md":"2/14","dow":"Sat","mon":2,"route":false},{"id":"475363843441197058","date":"2026-02-12","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.1,"dur":"00:19:50","dur_s":1190,"pace":"06'24\"","pace_s":384,"hr":153,"tl":54,"md":"2/12","dow":"Thu","mon":2,"route":false},{"id":"475340635855945733","date":"2026-02-11","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.4,"dur":"00:21:23","dur_s":1283,"pace":"06'17\"","pace_s":377,"hr":153,"tl":56,"md":"2/11","dow":"Wed","mon":2,"route":false},{"id":"475317454317322339","date":"2026-02-10","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.53,"dur":"00:15:16","dur_s":916,"pace":"04'19\"","pace_s":259,"hr":167,"tl":63,"md":"2/10","dow":"Tue","mon":2,"route":false},{"id":"475294260688617573","date":"2026-02-09","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.8,"dur":"00:23:12","dur_s":1392,"pace":"06'06\"","pace_s":366,"hr":153,"tl":63,"md":"2/9","dow":"Mon","mon":2,"route":false},{"id":"475201440260849966","date":"2026-02-05","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.5,"dur":"00:22:07","dur_s":1327,"pace":"06'19\"","pace_s":379,"hr":163,"tl":81,"md":"2/5","dow":"Thu","mon":2,"route":false},{"id":"475178258978078826","date":"2026-02-04","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":4.1,"dur":"00:25:57","dur_s":1557,"pace":"06'20\"","pace_s":380,"hr":154,"tl":74,"md":"2/4","dow":"Wed","mon":2,"route":false},{"id":"475155101590257667","date":"2026-02-03","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.51,"dur":"00:21:07","dur_s":1267,"pace":"06'01\"","pace_s":361,"hr":154,"tl":55,"md":"2/3","dow":"Tue","mon":2,"route":false},{"id":"475062358480290095","date":"2026-01-30","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.1,"dur":"00:18:39","dur_s":1119,"pace":"06'01\"","pace_s":361,"hr":154,"tl":55,"md":"1/30","dow":"Fri","mon":1,"route":false},{"id":"474969735633600516","date":"2026-01-26","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.21,"dur":"00:20:12","dur_s":1212,"pace":"06'18\"","pace_s":378,"hr":135,"tl":38,"md":"1/26","dow":"Mon","mon":1,"route":false},{"id":"474944419764666570","date":"2026-01-25","kind":"야외","city":"서울","name":"서울특별시 러닝","km":6.0,"dur":"00:39:14","dur_s":2354,"pace":"06'32\"","pace_s":392,"hr":160,"tl":84,"md":"1/25","dow":"Sun","mon":1,"route":false},{"id":"474876861260791814","date":"2026-01-22","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.01,"dur":"00:18:57","dur_s":1137,"pace":"06'18\"","pace_s":378,"hr":153,"tl":50,"md":"1/22","dow":"Thu","mon":1,"route":false},{"id":"474853564552872441","date":"2026-01-21","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.2,"dur":"00:20:04","dur_s":1204,"pace":"06'16\"","pace_s":376,"hr":154,"tl":56,"md":"1/21","dow":"Wed","mon":1,"route":false},{"id":"474807255944953956","date":"2026-01-19","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.0,"dur":"00:19:01","dur_s":1141,"pace":"06'20\"","pace_s":380,"hr":147,"tl":42,"md":"1/19","dow":"Mon","mon":1,"route":false},{"id":"474781138785697893","date":"2026-01-18","kind":"야외","city":"서울","name":"서울특별시 러닝","km":5.61,"dur":"00:34:55","dur_s":2095,"pace":"06'14\"","pace_s":374,"hr":156,"tl":86,"md":"1/18","dow":"Sun","mon":1,"route":false},{"id":"474624013851721732","date":"2026-01-11","kind":"야외","city":"인천","name":"인천광역시 러닝","km":8.01,"dur":"00:48:02","dur_s":2882,"pace":"06'00\"","pace_s":360,"hr":170,"tl":137,"md":"1/11","dow":"Sun","mon":1,"route":false},{"id":"474593793130135752","date":"2026-01-10","kind":"야외","city":"서울","name":"서울특별시 러닝","km":11.6,"dur":"01:18:13","dur_s":4693,"pace":"06'45\"","pace_s":405,"hr":157,"tl":240,"md":"1/10","dow":"Sat","mon":1,"route":false},{"id":"474552148846215372","date":"2026-01-08","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.11,"dur":"00:18:54","dur_s":1134,"pace":"06'05\"","pace_s":365,"hr":158,"tl":61,"md":"1/8","dow":"Thu","mon":1,"route":false},{"id":"474528928118112257","date":"2026-01-07","kind":"트레드밀","city":"트레드밀","name":"트레드밀","km":3.6,"dur":"00:21:35","dur_s":1295,"pace":"06'00\"","pace_s":360,"hr":161,"tl":75,"md":"1/7","dow":"Wed","mon":1,"route":false},{"id":"474489126914130023","date":"2026-01-05","kind":"야외","city":"서울","name":"서울특별시 러닝","km":5.0,"dur":"00:31:35","dur_s":1895,"pace":"06'19\"","pace_s":379,"hr":157,"tl":96,"md":"1/5","dow":"Mon","mon":1,"route":false},{"id":"474461594294714372","date":"2026-01-04","kind":"야외","city":"서울","name":"서울특별시 러닝","km":12.06,"dur":"01:15:48","dur_s":4548,"pace":"06'17\"","pace_s":377,"hr":156,"tl":212,"md":"1/4","dow":"Sun","mon":1,"route":false},{"id":"474440044843663662","date":"2026-01-03","kind":"야외","city":"서울","name":"서울특별시 러닝","km":10.0,"dur":"00:59:09","dur_s":3549,"pace":"05'55\"","pace_s":355,"hr":159,"tl":197,"md":"1/3","dow":"Sat","mon":1,"route":false},{"id":"474438883860316361","date":"2026-01-03","kind":"야외","city":"6k 이지런 + 6 스트라이드","name":"6k 이지런 + 6 스트라이드","km":0.41,"dur":"00:02:46","dur_s":166,"pace":"06'49\"","pace_s":409,"hr":134,"tl":6,"md":"1/3","dow":"Sat","mon":1,"route":false},{"id":"474385165083246595","date":"2026-01-01","kind":"야외","city":"서울","name":"서울특별시 러닝","km":12.47,"dur":"01:17:46","dur_s":4666,"pace":"06'14\"","pace_s":374,"hr":158,"tl":199,"md":"1/1","dow":"Thu","mon":1,"route":false}],"months":[{"m":1,"km":93.39,"n":16,"tl":1634,"time":"9:44:50","pace":"6'16\"","pace_s":375.8},{"m":2,"km":70.96,"n":15,"tl":1269,"time":"7:36:21","pace":"6'26\"","pace_s":385.7},{"m":3,"km":48.89,"n":8,"tl":951,"time":"5:23:31","pace":"6'37\"","pace_s":397.2},{"m":4,"km":98.32,"n":11,"tl":2106,"time":"9:38:18","pace":"5'53\"","pace_s":352.9},{"m":5,"km":230.18,"n":32,"tl":4045,"time":"24:25:38","pace":"6'22\"","pace_s":381.9},{"m":6,"km":92.12,"n":11,"tl":1723,"time":"9:35:49","pace":"6'15\"","pace_s":375.0},{"m":7,"km":110.21,"n":9,"tl":1714,"time":"13:28:49","pace":"7'20\"","pace_s":440.1},{"m":8,"km":224.55,"n":29,"tl":3118,"time":"31:50:07","pace":"8'30\"","pace_s":510.4},{"m":9,"km":181.37,"n":19,"tl":2558,"time":"19:43:10","pace":"6'31\"","pace_s":391.4},{"m":10,"km":102.91,"n":14,"tl":1456,"time":"10:21:46","pace":"6'02\"","pace_s":362.5},{"m":11,"km":91.01,"n":10,"tl":1514,"time":"9:27:14","pace":"6'14\"","pace_s":374.0},{"m":12,"km":0,"n":0,"tl":0,"time":"0:00","pace":null,"pace_s":null}],"weeks":[{"start":"2025-12-29","label":"12/29","km":34.94,"n":4,"tl":614},{"start":"2026-01-05","label":"1/5","km":31.32,"n":5,"tl":609},{"start":"2026-01-12","label":"1/12","km":5.61,"n":1,"tl":86},{"start":"2026-01-19","label":"1/19","km":15.21,"n":4,"tl":232},{"start":"2026-01-26","label":"1/26","km":6.31,"n":2,"tl":93},{"start":"2026-02-02","label":"2/2","km":11.11,"n":3,"tl":210},{"start":"2026-02-09","label":"2/9","km":33.08,"n":7,"tl":588},{"start":"2026-02-16","label":"2/16","km":5.19,"n":1,"tl":75},{"start":"2026-02-23","label":"2/23","km":21.58,"n":4,"tl":396},{"start":"2026-03-02","label":"3/2","km":12.75,"n":3,"tl":250},{"start":"2026-03-09","label":"3/9","km":4.63,"n":1,"tl":72},{"start":"2026-03-16","label":"3/16","km":21.5,"n":3,"tl":360},{"start":"2026-03-23","label":"3/23","km":10.01,"n":1,"tl":269},{"start":"2026-03-30","label":"3/30","km":14.93,"n":2,"tl":364},{"start":"2026-04-06","label":"4/6","km":31.05,"n":4,"tl":617},{"start":"2026-04-13","label":"4/13","km":23.24,"n":3,"tl":425},{"start":"2026-04-20","label":"4/20","km":29.1,"n":2,"tl":700},{"start":"2026-04-27","label":"4/27","km":21.63,"n":3,"tl":390},{"start":"2026-05-04","label":"5/4","km":50.26,"n":7,"tl":854},{"start":"2026-05-11","label":"5/11","km":52.68,"n":7,"tl":920},{"start":"2026-05-18","label":"5/18","km":41.29,"n":7,"tl":674},{"start":"2026-05-25","label":"5/25","km":64.32,"n":8,"tl":1207},{"start":"2026-06-01","label":"6/1","km":38.81,"n":3,"tl":668},{"start":"2026-06-08","label":"6/8","km":30.87,"n":3,"tl":565},{"start":"2026-06-15","label":"6/15","km":22.44,"n":5,"tl":490},{"start":"2026-06-29","label":"6/29","km":15.16,"n":2,"tl":208},{"start":"2026-07-06","label":"7/6","km":20.06,"n":2,"tl":323},{"start":"2026-07-13","label":"7/13","km":37.16,"n":3,"tl":576},{"start":"2026-07-20","label":"7/20","km":37.83,"n":2,"tl":607},{"start":"2026-07-27","label":"7/27","km":18.02,"n":2,"tl":228},{"start":"2026-08-03","label":"8/3","km":36.71,"n":5,"tl":533},{"start":"2026-08-10","label":"8/10","km":70.86,"n":8,"tl":867},{"start":"2026-08-17","label":"8/17","km":45.02,"n":4,"tl":562},{"start":"2026-08-24","label":"8/24","km":49.86,"n":9,"tl":869},{"start":"2026-08-31","label":"8/31","km":37.37,"n":4,"tl":629},{"start":"2026-09-07","label":"9/7","km":47.67,"n":6,"tl":623},{"start":"2026-09-14","label":"9/14","km":20.21,"n":3,"tl":254},{"start":"2026-09-21","label":"9/21","km":74.18,"n":6,"tl":1036},{"start":"2026-09-28","label":"9/28","km":25.54,"n":4,"tl":343},{"start":"2026-10-05","label":"10/5","km":38.87,"n":3,"tl":567},{"start":"2026-10-12","label":"10/12","km":31.33,"n":4,"tl":450},{"start":"2026-10-19","label":"10/19","km":2.64,"n":1,"tl":26},{"start":"2026-10-26","label":"10/26","km":52.79,"n":4,"tl":1006},{"start":"2026-11-02","label":"11/2","km":17.72,"n":4,"tl":235},{"start":"2026-11-09","label":"11/9","km":23.81,"n":4,"tl":339},{"start":"2026-11-16","label":"11/16","km":7.24,"n":1,"tl":79}],"season":{"km":1343.91,"n":174,"time":"151:15:33","tl":22088,"pace":"6'45\"","hr":155,"outdoor":127,"indoor":47,"outdoor_km":1167.92,"indoor_km":175.99,"routes":10,"longest":{"km":42.24,"date":"2026-11-01"},"biggest":{"tl":861,"date":"2026-11-01"}}};
+const RUNS = DATA.runs;
+const KO_MON = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+const DOW_KO = {Mon:'월',Tue:'화',Wed:'수',Thu:'목',Fri:'금',Sat:'토',Sun:'일'};
 
-/* ---------- weekly volume chart ---------- */
+/* ---------- monthly chart ---------- */
 (function(){
-  const svg = document.getElementById('volChart');
-  const weeks = DATA.weeks;
-  const W = 340, H = 190, padL = 26, padR = 6, padT = 22, padB = 26;
+  const svg = document.getElementById('monthChart');
+  const ms = DATA.months.filter(m => m.m <= 11);
+  const W = 340, H = 195, padL = 26, padR = 6, padT = 22, padB = 30;
   const iw = W - padL - padR, ih = H - padT - padB;
-  const maxKm = Math.max(...weeks.map(w => w.km));
-  const top = Math.ceil(maxKm / 10) * 10;
-  const bw = iw / weeks.length;
-  const barW = Math.min(24, bw * 0.52);
-  let s = '';
-  // grid
+  const maxKm = Math.max(...ms.map(m => m.km));
+  const top = Math.ceil(maxKm / 50) * 50;
+  const bw = iw / ms.length, barW = Math.min(20, bw * 0.56);
+  let s = '<defs><linearGradient id="gNow" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0%" stop-color="#d6ff8a"/><stop offset="100%" stop-color="#8fe02c"/></linearGradient></defs>';
   for (let i = 0; i <= 3; i++){
-    const y = padT + ih - (ih * i / 3);
-    const val = top * i / 3;
-    s += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#232b38" stroke-width="1"/>`;
-    s += `<text x="${padL-7}" y="${y+3.5}" fill="#5b6577" font-size="8.5" text-anchor="end">${val % 1 ? val.toFixed(1) : val}</text>`;
+    const y = padT + ih - (ih * i / 3), val = top * i / 3;
+    s += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#232b38"/>`;
+    s += `<text x="${padL-7}" y="${y+3.5}" fill="#5b6577" font-size="8.5" text-anchor="end">${val}</text>`;
   }
-  weeks.forEach((w, i) => {
-    const x = padL + bw * i + (bw - barW) / 2;
-    const h = Math.max(2, ih * w.km / top);
-    const y = padT + ih - h;
-    const fill = w.current ? 'url(#gNow)' : '#39465c';
-    s += `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="${Math.min(5, barW/2)}" fill="${fill}"/>`;
-    if (w.km > 0)
-      s += `<text x="${x+barW/2}" y="${y-5}" fill="${w.current ? '#b8ff3c' : '#8b97ab'}" font-size="9.5" font-weight="700" text-anchor="middle">${w.km.toFixed(1)}</text>`;
-    s += `<text x="${x+barW/2}" y="${H-padB+14}" fill="${w.current ? '#a8b3c4' : '#5b6577'}" font-size="8.5" text-anchor="middle">${w.label}</text>`;
-    s += `<text x="${x+barW/2}" y="${H-padB+25}" fill="#3f4859" font-size="7.5" text-anchor="middle">${w.runs}×</text>`;
+  ms.forEach((m, i) => {
+    const x = padL + bw * i + (bw - barW)/2;
+    const h = Math.max(2, ih * m.km / top), y = padT + ih - h;
+    const cur = m.m === 11;
+    s += `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="${Math.min(5, barW/2)}" fill="${cur ? 'url(#gNow)' : '#39465c'}"><title>${KO_MON[m.m-1]} ${m.km} km · ${m.n}회</title></rect>`;
+    if (m.km > 0) s += `<text x="${x+barW/2}" y="${y-5}" fill="${cur ? '#b8ff3c' : '#8b97ab'}" font-size="8.5" font-weight="700" text-anchor="middle">${Math.round(m.km)}</text>`;
+    s += `<text x="${x+barW/2}" y="${H-padB+14}" fill="${cur ? '#a8b3c4' : '#5b6577'}" font-size="8.5" text-anchor="middle">${m.m}</text>`;
+    s += `<text x="${x+barW/2}" y="${H-padB+25}" fill="#3f4859" font-size="7.5" text-anchor="middle">${m.n}회</text>`;
   });
-  s += `<text x="${padL}" y="${H-4}" fill="#3f4859" font-size="7.5">runs</text>`;
-  s = `<defs><linearGradient id="gNow" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="#d6ff8a"/><stop offset="100%" stop-color="#8fe02c"/></linearGradient></defs>` + s;
   svg.innerHTML = s;
 })();
 
-/* ---------- pace trend chart ---------- */
+/* ---------- pace by month ---------- */
 (function(){
   const svg = document.getElementById('paceChart');
-  const pts = DATA.paceTrend.slice().reverse();  // oldest -> newest
-  const W = 340, H = 170, padL = 30, padR = 8, padT = 16, padB = 24;
+  const ms = DATA.months.filter(m => m.pace_s);
+  const W = 340, H = 175, padL = 34, padR = 10, padT = 16, padB = 28;
   const iw = W - padL - padR, ih = H - padT - padB;
-  const ps = pts.map(p => p.pace_s);
+  const ps = ms.map(m => m.pace_s);
   const fast = Math.min(...ps) - 8, slow = Math.max(...ps) + 8;
-  const x = i => padL + (pts.length === 1 ? iw/2 : iw * i / (pts.length - 1));
+  const x = i => padL + iw * i / Math.max(1, ms.length - 1);
   const y = v => padT + ih * (v - fast) / (slow - fast);
   let s = '';
   for (let i = 0; i <= 3; i++){
-    const v = fast + (slow-fast) * i / 3;
-    const yy = y(v);
-    const rv = Math.round(v/5)*5;
+    const v = fast + (slow-fast) * i / 3, yy = y(v);
+    const rv = Math.round(v/10)*10;
     const lab = Math.floor(rv/60) + "'" + String(rv%60).padStart(2,'0') + '"';
-    s += `<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="#232b38" stroke-width="1"/>`;
+    s += `<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="#232b38"/>`;
     s += `<text x="${padL-6}" y="${yy+3}" fill="#5b6577" font-size="8" text-anchor="end">${lab}</text>`;
   }
-  const line = pts.map((p,i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.pace_s).toFixed(1)}`).join(' ');
-  const area = line + ` L${x(pts.length-1).toFixed(1)},${padT+ih} L${x(0).toFixed(1)},${padT+ih} Z`;
+  const line = ms.map((m,i) => `${i?'L':'M'}${x(i).toFixed(1)},${y(m.pace_s).toFixed(1)}`).join(' ');
   s += `<defs><linearGradient id="gPace" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stop-color="rgba(87,182,255,.30)"/><stop offset="100%" stop-color="rgba(87,182,255,0)"/></linearGradient></defs>`;
-  s += `<path d="${area}" fill="url(#gPace)"/>`;
+  s += `<path d="${line} L${x(ms.length-1).toFixed(1)},${padT+ih} L${x(0).toFixed(1)},${padT+ih} Z" fill="url(#gPace)"/>`;
   s += `<path d="${line}" fill="none" stroke="#57b6ff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
-  pts.forEach((p,i) => {
-    const isLast = i === pts.length - 1;
-    s += `<circle cx="${x(i)}" cy="${y(p.pace_s)}" r="${isLast ? 4 : 2.6}" fill="${isLast ? '#b8ff3c' : '#57b6ff'}" stroke="#10141b" stroke-width="1.5"/>`;
-    s += `<title>${p.md} · ${p.name} · ${p.km} km · ${p.pace}/km</title>`;
+  ms.forEach((m,i) => {
+    s += `<circle cx="${x(i)}" cy="${y(m.pace_s)}" r="${i===ms.length-1?4:2.6}" fill="${i===ms.length-1?'#b8ff3c':'#57b6ff'}" stroke="#10141b" stroke-width="1.5"><title>${KO_MON[m.m-1]} ${m.pace}/km</title></circle>`;
+    s += `<text x="${x(i)}" y="${H-8}" fill="#5b6577" font-size="8" text-anchor="middle">${m.m}</text>`;
   });
-  const marks = [0, Math.floor((pts.length-1)/2), pts.length-1];
-  marks.forEach(i => {
-    s += `<text x="${x(i)}" y="${H-8}" fill="#5b6577" font-size="8" text-anchor="middle">${pts[i].md}</text>`;
+  svg.innerHTML = s;
+})();
+
+/* ---------- weekly bars ---------- */
+(function(){
+  const svg = document.getElementById('weekChart');
+  const ws = DATA.weeks;
+  const W = 340, H = 150, padL = 24, padR = 6, padT = 12, padB = 26;
+  const iw = W - padL - padR, ih = H - padT - padB;
+  const maxKm = Math.max(...ws.map(w => w.km));
+  const top = Math.ceil(maxKm / 10) * 10;
+  const bw = iw / ws.length;
+  let s = '';
+  for (let i = 0; i <= 2; i++){
+    const y = padT + ih - (ih * i / 2), val = top * i / 2;
+    s += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#232b38"/>`;
+    s += `<text x="${padL-6}" y="${y+3.5}" fill="#5b6577" font-size="8" text-anchor="end">${val}</text>`;
+  }
+  let lastMon = null;
+  ws.forEach((w, i) => {
+    const d = new Date(w.start + 'T00:00:00');
+    const x = padL + bw * i;
+    const h = Math.max(1.5, ih * w.km / top), y = padT + ih - h;
+    const cur = i === ws.length - 1;
+    s += `<rect x="${x+0.6}" y="${y}" width="${Math.max(1.6, bw-1.2)}" height="${h}" rx="1.4" fill="${cur ? '#b8ff3c' : '#57b6ff'}" opacity="${cur?1:.75}"><title>${w.label} 주 · ${w.km} km · ${w.n}회</title></rect>`;
+    if (d.getMonth() !== lastMon){
+      lastMon = d.getMonth();
+      s += `<text x="${x+bw/2}" y="${H-padB+13}" fill="#5b6577" font-size="8" text-anchor="middle">${d.getMonth()+1}</text>`;
+    }
   });
   svg.innerHTML = s;
 })();
 
 /* ---------- run list ---------- */
-(function(){
-  const list = document.getElementById('runList');
-  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-  const GROUPS = {};
-  DATA.runs.forEach(r => {
-    const key = r.date.slice(0,7);
-    (GROUPS[key] = GROUPS[key] || []).push(r);
-  });
+const listEl = document.getElementById('runList');
+let filter = 'all';
+let selectedId = null;
+
+function kindClass(r){ return r.kind === '트레드밀' ? 'tread' : 'out'; }
+
+function renderList(){
+  const groups = {};
+  RUNS.forEach(r => (groups[r.date.slice(0,7)] = groups[r.date.slice(0,7)] || []).push(r));
   let html = '';
-  Object.keys(GROUPS).sort().reverse().forEach(key => {
-    const d = new Date(key + '-01T00:00:00');
-    html += `<div class="month-label" data-group="${key}">${MONTHS[d.getMonth()]} ${d.getFullYear()}</div>`;
-    GROUPS[key].forEach(r => {
-      const dd = new Date(r.date + 'T00:00:00');
-      html += `<div class="run" data-type="${r.type}">
-        <div class="d"><b>${String(dd.getDate()).padStart(2,'0')}</b><span>${r.dow}</span></div>
+  Object.keys(groups).sort().reverse().forEach(key => {
+    const rs = groups[key];
+    const km = rs.reduce((a, b) => a + b.km, 0);
+    const n = rs.length;
+    const noRoutes = filter === 'gps' ? rs.filter(r => r.route) : rs;
+    if (!noRoutes.length) return;
+    const mtxt = KO_MON[parseInt(key.slice(5), 10) - 1];
+    html += `<div class="month-label" data-group="${key}"><span>${mtxt} ${key.slice(0,4)}</span><em>${km.toFixed(1)} km · ${n}회</em></div>`;
+    noRoutes.forEach(r => {
+      const cls = kindClass(r);
+      if (filter !== 'all' && filter !== cls && !(filter === 'gps' && r.route)) return;
+      if (filter === 'gps' && !r.route) return;
+      html += `<div class="run${r.id === selectedId ? ' on' : ''}" data-id="${r.id}" data-kind="${cls}">
+        <div class="d"><b>${String(parseInt(r.date.slice(8), 10)).padStart(2,'0')}</b><span>${DOW_KO[r.dow]}</span></div>
         <div>
-          <div class="n">${r.name}<span class="tag">${r.type === 'treadmill' ? 'Indoor' : 'Outdoor'}</span></div>
+          <div class="n">${r.city}<span class="tag">${r.kind}</span>${r.route ? '<span class="tag gps">지도</span>' : ''}</div>
           <div class="m"><em>${r.dur}</em> · ${r.pace}/km · <em>${r.hr} bpm</em></div>
         </div>
         <div class="r"><b>${r.km.toFixed(2)}<span style="display:inline;font-size:11px;font-weight:600;color:var(--ink3)"> km</span></b>
@@ -413,23 +467,110 @@ const DATA = {"weeks": [{"start": "2026-09-28", "label": "9/28", "km": 25.54, "r
       </div>`;
     });
   });
-  list.innerHTML = html;
-
-  document.querySelectorAll('.chip').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.chip').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
-      const f = btn.dataset.f;
-      document.querySelectorAll('.run').forEach(el => {
-        el.style.display = (f === 'all' || el.dataset.type === f) ? '' : 'none';
-      });
-      document.querySelectorAll('.month-label').forEach(g => {
-        let n = g.nextElementSibling, any = false;
-        while (n && n.classList.contains('run')) { if (n.style.display !== 'none') any = true; n = n.nextElementSibling; }
-        g.style.display = any ? '' : 'none';
-      });
-    });
+  listEl.innerHTML = html || '<div class="month-label">해당 조건의 러닝이 없습니다</div>';
+  listEl.querySelectorAll('.run').forEach(el => {
+    el.addEventListener('click', () => selectRun(el.dataset.id, true));
   });
-})();
+}
+
+document.querySelectorAll('.chips .chip').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.chips .chip').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+    filter = btn.dataset.f;
+    renderList();
+  });
+});
+
+/* ---------- map ---------- */
+let map, allLayer, hiLayer, routeIndex = {}, monthFilter = 'all';
+
+function initMap(){
+  map = L.map('map', {zoomControl:true, scrollWheelZoom:false, attributionControl:true});
+  map.setView([37.52, 126.95], 11);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    maxZoom: 19, detectRetina: true,
+    attribution: '&copy; OpenStreetMap &copy; CARTO'
+  }).addTo(map);
+  allLayer = L.layerGroup().addTo(map);
+  hiLayer = L.layerGroup().addTo(map);
+  drawAll();
+}
+
+function visibleRuns(){
+  return RUNS.filter(r => r.path && (monthFilter === 'all' || String(r.mon) === monthFilter));
+}
+
+function drawAll(){
+  allLayer.clearLayers();
+  const pts = [];
+  visibleRuns().forEach(r => {
+    const p = L.polyline(r.path, {color:'#8fe02c', weight:2, opacity:.42, interactive:true});
+    p.on('click', () => selectRun(r.id, false));
+    p.bindTooltip(`${r.md} · ${r.km.toFixed(2)} km · ${r.pace}/km`, {direction:'top'});
+    p.addTo(allLayer);
+    r._poly = p;
+    r.path.forEach(q => pts.push(q));
+  });
+  document.getElementById('mapCount').textContent = `${visibleRuns().length}개 러닝 · GPS 경로`;
+  if (pts.length){
+    const b = L.latLngBounds(pts).pad(0.12);
+    map.fitBounds(b, {animate:false});
+  }
+}
+
+function selectRun(id, scroll){
+  const r = RUNS.find(x => x.id === id);
+  if (!r) return;
+  selectedId = id;
+  renderList();
+  hiLayer.clearLayers();
+  allLayer.eachLayer(l => l.setStyle({opacity:.28, weight:2, color:'#8fe02c'}));
+  const card = document.getElementById('routeCard');
+  const title = document.getElementById('rcTitle');
+  const desc = document.getElementById('rcDesc');
+  if (r.path){
+    const line = L.polyline(r.path, {color:'#b8ff3c', weight:4.5, opacity:1}).addTo(hiLayer);
+    const b = line.getBounds().pad(0.15);
+    map.fitBounds(b, {animate:true});
+    title.textContent = `${r.md} · ${r.city} · ${r.km.toFixed(2)} km`;
+    desc.innerHTML = `${r.start} 시작 · ${r.dur} · ${r.pace}/km · ${r.hr} bpm · ${r.tl} TL`;
+    card.innerHTML = `<div class="top"><div>
+        <div class="t">${r.md} · ${r.city} · ${r.km.toFixed(2)} km</div>
+        <div class="d">${r.start} 시작 · ${r.dur} · ${r.pace}/km · 평균 ${r.hr} bpm · ${r.tl} TL</div></div></div>
+      <div class="nums">
+        <div><span>거리</span><b>${r.km.toFixed(2)}<small style="font-size:10px;color:#6c7891"> km</small></b></div>
+        <div><span>시간</span><b>${r.dur}</b></div>
+        <div><span>페이스</span><b>${r.pace}</b></div>
+        <div><span>상승</span><b>${r.gain}<small style="font-size:10px;color:#6c7891"> m</small></b></div>
+      </div>
+      <div class="nums" style="margin-top:6px">
+        <div><span>평균 심박</span><b>${r.hr}<small style="font-size:10px;color:#6c7891"> bpm</small></b></div>
+        <div><span>훈련부하</span><b>${r.tl}<small style="font-size:10px;color:#6c7891"> TL</small></b></div>
+        <div><span>종류</span><b>${r.kind}</b></div>
+        <div><span>경로 점</span><b>${r.path.length}</b></div>
+      </div>
+      <div class="hint">시작·종료 지점 약 260m는 개인정보 보호를 위해 잘라 표시합니다. 상승 고도는 GPS 원본 기준입니다.</div>`;
+  } else {
+    title.textContent = `${r.md} · ${r.city} · ${r.km.toFixed(2)} km`;
+    card.innerHTML = `<div class="top"><div>
+        <div class="t">${r.md} · ${r.city} · ${r.km.toFixed(2)} km</div>
+        <div class="d">${r.dur} · ${r.pace}/km · 평균 ${r.hr} bpm · ${r.tl} TL</div></div></div>
+      <div class="hint">이 러닝은 GPS 경로가 없습니다(트레드밀·실내 또는 경로 미수록).</div>`;
+  }
+  if (scroll) document.getElementById('mapSection').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+document.getElementById('mapMonth').addEventListener('change', e => {
+  monthFilter = e.target.value;
+  drawAll();
+  document.getElementById('routeCard').innerHTML = '<div class="top"><div><div class="t">경로를 선택하세요</div><div class="d">지도 위 노선이나 아래 기록을 누르면 상세가 표시됩니다.</div></div></div>';
+});
+document.getElementById('fitBtn').addEventListener('click', () => { drawAll(); });
+
+initMap();
+renderList();
+const firstRoute = RUNS.find(r => r.path);
+if (firstRoute) selectRun(firstRoute.id, false);
 </script>
 </body>
 </html>
