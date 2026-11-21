@@ -117,7 +117,8 @@
     text-transform:uppercase;border:1px solid var(--line2);color:var(--ink3)}
   .run .m{font-size:11.5px;color:var(--ink3);margin-top:3px;font-variant-numeric:tabular-nums}
   .run .m em{font-style:normal;color:var(--ink2)}
-  .run .r{text-align:right;white-space:nowrap}
+  .run .r{text-align:right;white-space:nowrap;min-width:62px}
+  .run .r b{white-space:nowrap}
   .run .r b{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.2px}
   .run .r span{display:block;font-size:10.5px;color:var(--ink3);font-variant-numeric:tabular-nums}
   .tl{display:inline-block;font-size:10px;font-weight:700;color:var(--acc);
@@ -139,11 +140,18 @@
   footer{margin:30px 4px 0;padding-top:16px;border-top:1px solid var(--line);
     font-size:10.5px;color:var(--ink3);line-height:1.6;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
   footer a{color:var(--ink2);text-decoration:none;border-bottom:1px dotted var(--line2)}
-  @media (max-width:360px){
-    .big .num{font-size:48px}
+  @media (max-width:430px){
+    .wrap{padding:14px 13px 0}
+    .big .num{font-size:50px}
     .hero-grid{grid-template-columns:repeat(2,1fr)}
+    .hero{padding:20px 17px 16px}
     .strip{grid-template-columns:1fr 1fr}
     .rec{grid-template-columns:1fr}
+    .card .v{font-size:25px}
+  }
+  @media (max-width:360px){
+    .big .num{font-size:44px}
+    .stats{grid-template-columns:1fr}
   }
   @media (prefers-reduced-motion:no-preference){
     .run,.card,.panel{transition:border-color .18s}
@@ -180,9 +188,6 @@
     <div class="big">
       <div class="num">7.24</div>
       <div class="unit">km</div>
-    </div>
-    <div class="hero-sub">
-      <b>06'17"/km</b> · 00:45:31 &nbsp;·&nbsp; Avg HR <b>141 bpm</b>
     </div>
     <div class="hero-grid">
       <div class="hg"><span>Pace</span><b>06'17"</b><small>/km</small></div>
@@ -400,7 +405,7 @@ const DATA = {"weeks": [{"start": "2026-09-28", "label": "9/28", "km": 25.54, "r
       html += `<div class="run" data-type="${r.type}">
         <div class="d"><b>${String(dd.getDate()).padStart(2,'0')}</b><span>${r.dow}</span></div>
         <div>
-          <div class="n">${r.name}<span class="tag">${r.type === 'treadmill' ? 'Treadmill' : 'Outdoor'}</span></div>
+          <div class="n">${r.name}<span class="tag">${r.type === 'treadmill' ? 'Indoor' : 'Outdoor'}</span></div>
           <div class="m"><em>${r.dur}</em> · ${r.pace}/km · <em>${r.hr} bpm</em></div>
         </div>
         <div class="r"><b>${r.km.toFixed(2)}<span style="font-size:11px;font-weight:600;color:var(--ink3)"> km</span></b>
