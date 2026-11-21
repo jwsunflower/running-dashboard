@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0c10">
+<title>Running Log · COROS Dashboard</title>
+<meta name="description" content="A personal running log — distance, pace, training load, recovery and HRV synced from COROS.">
+<style>
+  :root{
+    --bg:#0a0c10; --bg2:#10141b; --card:#141922; --card2:#181e28;
+    --line:#232b38; --line2:#2d3646;
+    --ink:#f2f5f9; --ink2:#a8b3c4; --ink3:#6c7891;
+    --acc:#b8ff3c; --acc2:#6ee7a8; --blu:#57b6ff; --org:#ffb05c; --pnk:#ff7a9c;
+    --r:18px;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(900px 420px at 80% -10%, rgba(184,255,60,.10), transparent 60%),
+      radial-gradient(700px 380px at 0% 0%, rgba(87,182,255,.08), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Pretendard","Apple SD Gothic Neo",Roboto,sans-serif;
+    font-size:16px; line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:40px;
+  }
+  .wrap{max-width:760px;margin:0 auto;padding:18px 16px 0}
+  /* ---------- header ---------- */
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 2px 18px}
+  .brand{display:flex;align-items:center;gap:10px}
+  .mark{width:34px;height:34px;border-radius:11px;background:linear-gradient(145deg,var(--acc),#58c93a);
+    display:grid;place-items:center;color:#0a0c10;font-weight:800;font-size:17px;letter-spacing:-.5px;
+    box-shadow:0 6px 18px rgba(184,255,60,.22)}
+  .brand h1{font-size:15px;margin:0;font-weight:700;letter-spacing:.2px}
+  .brand p{margin:1px 0 0;font-size:11.5px;color:var(--ink3);letter-spacing:.3px}
+  .stamp{text-align:right;font-size:10.5px;color:var(--ink3);letter-spacing:.4px;line-height:1.4}
+  .stamp b{display:block;color:var(--ink2);font-weight:600;font-size:11.5px}
+
+  /* ---------- hero ---------- */
+  .hero{position:relative;overflow:hidden;border-radius:24px;padding:22px 20px 18px;
+    background:linear-gradient(160deg,#1b2a17 0%,#141c19 42%,#121821 100%);
+    border:1px solid #2c3a28;box-shadow:0 18px 44px rgba(0,0,0,.45)}
+  .hero:after{content:"";position:absolute;right:-70px;top:-90px;width:230px;height:230px;border-radius:50%;
+    background:radial-gradient(circle,rgba(184,255,60,.20),transparent 68%)}
+  .hero-top{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1}
+  .eyebrow{font-size:10.5px;letter-spacing:1.6px;text-transform:uppercase;color:var(--acc);font-weight:700}
+  .hero-date{font-size:12px;color:var(--ink2);margin-top:3px}
+  .pill{font-size:10.5px;font-weight:600;padding:5px 10px;border-radius:999px;border:1px solid var(--line2);
+    color:var(--ink2);background:rgba(255,255,255,.03);white-space:nowrap}
+  .big{display:flex;align-items:baseline;gap:7px;margin:14px 0 2px;position:relative;z-index:1}
+  .big .num{font-size:58px;font-weight:800;letter-spacing:-2.5px;line-height:.95;
+    font-variant-numeric:tabular-nums}
+  .big .unit{font-size:17px;font-weight:600;color:var(--acc);letter-spacing:-.2px}
+  .hero-sub{font-size:13px;color:var(--ink2);position:relative;z-index:1}
+  .hero-sub b{color:var(--ink);font-weight:600}
+  .hero-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:18px;position:relative;z-index:1}
+  .hg{background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.06);border-radius:13px;
+    padding:9px 8px;text-align:center}
+  .hg span{display:block;font-size:9.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin-bottom:3px}
+  .hg b{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+  .hg small{font-size:9.5px;color:var(--ink3);font-weight:500}
+
+  /* ---------- section ---------- */
+  section{margin-top:26px}
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 4px 11px}
+  .sec-head h2{font-size:13px;margin:0;font-weight:700;letter-spacing:.9px;text-transform:uppercase;color:var(--ink)}
+  .sec-head span{font-size:10.5px;color:var(--ink3);letter-spacing:.3px}
+
+  /* ---------- stat cards ---------- */
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px}
+  .card .k{font-size:10.5px;letter-spacing:.9px;text-transform:uppercase;color:var(--ink3);font-weight:600;
+    display:flex;align-items:center;gap:6px}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--acc);display:inline-block}
+  .card .v{font-size:27px;font-weight:800;letter-spacing:-1px;margin:6px 0 1px;font-variant-numeric:tabular-nums}
+  .card .v small{font-size:12px;font-weight:600;color:var(--ink3);letter-spacing:0;margin-left:2px}
+  .card .s{font-size:11.5px;color:var(--ink3);line-height:1.35}
+  .bar{height:5px;border-radius:99px;background:#1e2532;margin-top:10px;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:99px}
+
+  /* ---------- chart ---------- */
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 14px 10px}
+  .chart{width:100%;height:auto;display:block;overflow:visible}
+  .chart text{font-family:inherit}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:2px 2px 0;font-size:10.5px;color:var(--ink3)}
+  .legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+
+  /* ---------- four week strip ---------- */
+  .strip{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+  .strip div{background:var(--card);padding:13px 12px}
+  .strip span{display:block;font-size:10px;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);margin-bottom:4px}
+  .strip b{font-size:17px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.4px}
+
+  /* ---------- filters ---------- */
+  .chips{display:flex;gap:7px;margin:0 2px 12px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;font-size:11.5px;font-weight:600;padding:7px 13px;border-radius:999px;
+    border:1px solid var(--line2);background:transparent;color:var(--ink2);cursor:pointer;
+    transition:background .15s,color .15s,border-color .15s;font-family:inherit}
+  .chip[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:#0a0c10}
+
+  /* ---------- run list ---------- */
+  .month-label{font-size:11px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;
+    color:var(--ink3);margin:16px 4px 8px}
+  .month-label:first-child{margin-top:2px}
+  .run{display:grid;grid-template-columns:44px 1fr auto;gap:12px;align-items:center;
+    background:var(--card);border:1px solid var(--line);border-radius:15px;padding:12px 14px;margin-bottom:8px}
+  .run .d{text-align:center}
+  .run .d b{display:block;font-size:16.5px;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums}
+  .run .d span{font-size:9.5px;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3)}
+  .run .n{font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .tag{font-size:9px;font-weight:700;letter-spacing:.5px;padding:2px 6px;border-radius:5px;
+    text-transform:uppercase;border:1px solid var(--line2);color:var(--ink3)}
+  .run .m{font-size:11.5px;color:var(--ink3);margin-top:3px;font-variant-numeric:tabular-nums}
+  .run .m em{font-style:normal;color:var(--ink2)}
+  .run .r{text-align:right;white-space:nowrap}
+  .run .r b{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.2px}
+  .run .r span{display:block;font-size:10.5px;color:var(--ink3);font-variant-numeric:tabular-nums}
+  .tl{display:inline-block;font-size:10px;font-weight:700;color:var(--acc);
+    background:rgba(184,255,60,.09);border:1px solid rgba(184,255,60,.20);
+    padding:2px 6px;border-radius:5px;margin-top:3px}
+
+  /* ---------- records ---------- */
+  .rec{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .rec div{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:11px 13px;
+    display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+  .rec span{font-size:11.5px;color:var(--ink3)}
+  .rec b{font-size:14.5px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.2px}
+
+  .note{background:linear-gradient(150deg,rgba(184,255,60,.07),rgba(87,182,255,.05));
+    border:1px solid #2b3a2a;border-radius:var(--r);padding:15px 16px}
+  .note .k{font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--acc);font-weight:700}
+  .note p{margin:6px 0 0;font-size:13px;color:var(--ink2);line-height:1.5}
+
+  footer{margin:30px 4px 0;padding-top:16px;border-top:1px solid var(--line);
+    font-size:10.5px;color:var(--ink3);line-height:1.6;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  footer a{color:var(--ink2);text-decoration:none;border-bottom:1px dotted var(--line2)}
+  @media (max-width:360px){
+    .big .num{font-size:48px}
+    .hero-grid{grid-template-columns:repeat(2,1fr)}
+    .strip{grid-template-columns:1fr 1fr}
+    .rec{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion:no-preference){
+    .run,.card,.panel{transition:border-color .18s}
+    .run:hover,.card:hover{border-color:var(--line2)}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="mark">R</div>
+      <div>
+        <h1>Running Log</h1>
+        <p>COROS Dashboard · @jwsunflower</p>
+      </div>
+    </div>
+    <div class="stamp">
+      <b>Last updated</b>
+      2026-11-21 · 11:21 KST
+    </div>
+  </header>
+
+  <!-- HERO : latest run -->
+  <div class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="eyebrow">Latest run</div>
+        <div class="hero-date">Sat 21 Nov 2026 · Seoul Run</div>
+      </div>
+      <div class="pill">SAT</div>
+    </div>
+    <div class="big">
+      <div class="num">7.24</div>
+      <div class="unit">km</div>
+    </div>
+    <div class="hero-sub">
+      <b>06'17"/km</b> · 00:45:31 &nbsp;·&nbsp; Avg HR <b>141 bpm</b>
+    </div>
+    <div class="hero-grid">
+      <div class="hg"><span>Pace</span><b>06'17"</b><small>/km</small></div>
+      <div class="hg"><span>Time</span><b>00:45:31</b></div>
+      <div class="hg"><span>Avg HR</span><b>141</b><small>bpm</small></div>
+      <div class="hg"><span>Load</span><b>79</b><small>TL</small></div>
+    </div>
+  </div>
+
+  <!-- READINESS -->
+  <section>
+    <div class="sec-head"><h2>Readiness &amp; fitness</h2><span>COROS EvoLab · this morning</span></div>
+    <div class="stats">
+      <div class="card">
+        <div class="k"><span class="dot"></span>Recovery</div>
+        <div class="v">95<small>%</small></div>
+        <div class="s">9 hrs till full recovery · <b style="color:var(--acc);font-weight:600">Fresh</b></div>
+        <div class="bar"><i style="width:95%;background:linear-gradient(90deg,#6ee7a8,#b8ff3c)"></i></div>
+      </div>
+      <div class="card">
+        <div class="k"><span class="dot" style="background:var(--blu)"></span>Overnight HRV</div>
+        <div class="v">63<small>ms</small></div>
+        <div class="s">Normal range 49–67 ms · in range</div>
+        <div class="bar"><i style="width:70%;background:linear-gradient(90deg,#57b6ff,#8fd4ff)"></i></div>
+      </div>
+      <div class="card">
+        <div class="k"><span class="dot" style="background:var(--org)"></span>Base Fitness</div>
+        <div class="v">60</div>
+        <div class="s">Load impact 36 · intensity trend 60%</div>
+        <div class="bar"><i style="width:60%;background:linear-gradient(90deg,#ffb05c,#ffd39b)"></i></div>
+      </div>
+      <div class="card">
+        <div class="k"><span class="dot" style="background:var(--pnk)"></span>Running Fitness</div>
+        <div class="v">82.6</div>
+        <div class="s">VO₂ max 44 · resting HR 45 bpm</div>
+        <div class="bar"><i style="width:78%;background:linear-gradient(90deg,#ff7a9c,#ffc0cf)"></i></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WEEKLY VOLUME -->
+  <section>
+    <div class="sec-head"><h2>Weekly volume</h2><span>last 8 weeks · Mon–Sun</span></div>
+    <div class="panel">
+      <svg id="volChart" class="chart" viewBox="0 0 340 190" role="img" aria-label="Weekly running distance for the last eight weeks"></svg>
+      <div class="legend"><span><i style="background:var(--acc)"></i>This week</span><span><i style="background:#39465c"></i>Previous weeks</span></div>
+    </div>
+  </section>
+
+  <!-- PACE TREND -->
+  <section>
+    <div class="sec-head"><h2>Pace trend</h2><span>last 14 sessions · min/km</span></div>
+    <div class="panel">
+      <svg id="paceChart" class="chart" viewBox="0 0 340 170" role="img" aria-label="Average pace of the last fourteen sessions"></svg>
+      <div class="legend"><span>Up = faster</span></div>
+    </div>
+  </section>
+
+  <!-- 4 WEEK SUMMARY -->
+  <section>
+    <div class="sec-head"><h2>Last 4 weeks</h2><span>26 Oct – 21 Nov</span></div>
+    <div class="strip">
+      <div><span>Distance</span><b>101.56 km</b></div>
+      <div><span>Training load</span><b>1659 TL</b></div>
+      <div><span>Time</span><b>10:28:27</b></div>
+      <div><span>Sessions</span><b>13</b></div>
+      <div><span>Avg HR</span><b>153 bpm</b></div>
+      <div><span>Avg / week</span><b>25.4 km</b></div>
+    </div>
+  </section>
+
+  <!-- RUNS -->
+  <section>
+    <div class="sec-head"><h2>Recent runs</h2><span>40 sessions · 8 Sep – 21 Nov</span></div>
+    <div class="chips" role="group" aria-label="Filter runs">
+      <button class="chip" data-f="all" aria-pressed="true">All</button>
+      <button class="chip" data-f="run" aria-pressed="false">Outdoor</button>
+      <button class="chip" data-f="treadmill" aria-pressed="false">Treadmill</button>
+    </div>
+    <div id="runList"></div>
+  </section>
+
+  <!-- RECORDS -->
+  <section>
+    <div class="sec-head"><h2>Best efforts</h2><span>personal records · 4 weeks</span></div>
+    <div class="rec">
+      <div><span>1 km</span><b>05:26</b></div>
+      <div><span>3 km</span><b>16:31</b></div>
+      <div><span>5 km</span><b>27:39</b></div>
+      <div><span>10 km</span><b>55:32</b></div>
+      <div><span>Half marathon</span><b>1:58:04</b></div>
+      <div><span>Marathon</span><b>3:58:41</b></div>
+      <div><span>Longest run</span><b>42.24 km</b></div>
+      <div><span>Most elevation</span><b>154 m</b></div>
+    </div>
+  </section>
+
+  <!-- RACE PREDICTOR -->
+  <section>
+    <div class="sec-head"><h2>Race predictor</h2><span>COROS estimate</span></div>
+    <div class="rec">
+      <div><span>5 km</span><b>23:44 <em style="font-style:normal;color:var(--ink3);font-size:11px">4'45"</em></b></div>
+      <div><span>10 km</span><b>49:32 <em style="font-style:normal;color:var(--ink3);font-size:11px">4'57"</em></b></div>
+      <div><span>Half marathon</span><b>1:51:36 <em style="font-style:normal;color:var(--ink3);font-size:11px">5'17"</em></b></div>
+      <div><span>Marathon</span><b>3:57:13 <em style="font-style:normal;color:var(--ink3);font-size:11px">5'37"</em></b></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="note">
+      <div class="k">Training status · Resuming</div>
+      <p>Increased intensity over the past seven days. The body is gradually adjusting to the new workload — building training time and intensity over time like this is an effective way to improve fitness. Yesterday's efficiency score: 101% (good).</p>
+    </div>
+  </section>
+
+  <footer>
+    <div>
+      Metrics synced from COROS · Training Hub, 21 Nov 2026.<br>
+      Heart-rate and pace zones: threshold 04'57"/km, LT HR 167 bpm, max HR 189 bpm.
+    </div>
+    <div style="text-align:right">Personal log · no personal data published</div>
+  </footer>
+</div>
+
+<script>
+const DATA = {"weeks": [{"start": "2026-09-28", "label": "9/28", "km": 25.54, "runs": 4, "tl": 343, "time": "2:30:23", "pace": "05'53\"", "pace_s": 353.4, "current": false}, {"start": "2026-10-05", "label": "10/5", "km": 38.87, "runs": 3, "tl": 567, "time": "4:01:29", "pace": "06'12\"", "pace_s": 372.4, "current": false}, {"start": "2026-10-12", "label": "10/12", "km": 31.33, "runs": 4, "tl": 450, "time": "3:03:58", "pace": "05'53\"", "pace_s": 352.7, "current": false}, {"start": "2026-10-19", "label": "10/19", "km": 2.64, "runs": 1, "tl": 26, "time": "0:20:17", "pace": "07'41\"", "pace_s": 461.0, "current": false}, {"start": "2026-10-26", "label": "10/26", "km": 52.79, "runs": 4, "tl": 1006, "time": "4:59:38", "pace": "05'41\"", "pace_s": 340.8, "current": false}, {"start": "2026-11-02", "label": "11/2", "km": 17.72, "runs": 4, "tl": 235, "time": "2:03:33", "pace": "06'58\"", "pace_s": 418.1, "current": false}, {"start": "2026-11-09", "label": "11/9", "km": 23.81, "runs": 4, "tl": 339, "time": "2:39:45", "pace": "06'42\"", "pace_s": 402.3, "current": false}, {"start": "2026-11-16", "label": "11/16", "km": 7.24, "runs": 1, "tl": 79, "time": "0:45:31", "pace": "06'17\"", "pace_s": 377.0, "current": true}], "months": [{"month": "2026-09", "km": 148.08, "runs": 16, "tl": 1988}, {"month": "2026-10", "km": 102.91, "runs": 14, "tl": 1456}, {"month": "2026-11", "km": 91.01, "runs": 10, "tl": 1514}], "runs": [{"date": "2026-11-21", "name": "Seoul Run", "type": "run", "km": 7.24, "dur": "00:45:31", "pace": "06'17\"", "pace_s": 377, "hr": 141, "tl": 79, "dow": "Sat", "md": "11/21", "year": 2026}, {"date": "2026-11-15", "name": "Seoul Run", "type": "run", "km": 9.86, "dur": "01:10:54", "pace": "07'11\"", "pace_s": 431, "hr": 145, "tl": 124, "dow": "Sun", "md": "11/15", "year": 2026}, {"date": "2026-11-14", "name": "Seoul Run", "type": "run", "km": 6.6, "dur": "00:46:57", "pace": "07'07\"", "pace_s": 427, "hr": 156, "tl": 98, "dow": "Sat", "md": "11/14", "year": 2026}, {"date": "2026-11-11", "name": "Treadmill", "type": "treadmill", "km": 3.85, "dur": "00:22:17", "pace": "05'47\"", "pace_s": 347, "hr": 150, "tl": 56, "dow": "Wed", "md": "11/11", "year": 2026}, {"date": "2026-11-09", "name": "Treadmill", "type": "treadmill", "km": 3.5, "dur": "00:19:37", "pace": "05'36\"", "pace_s": 336, "hr": 159, "tl": 61, "dow": "Mon", "md": "11/9", "year": 2026}, {"date": "2026-11-08", "name": "Incheon Run", "type": "run", "km": 6.02, "dur": "00:42:03", "pace": "06'59\"", "pace_s": 419, "hr": 151, "tl": 70, "dow": "Sun", "md": "11/8", "year": 2026}, {"date": "2026-11-07", "name": "Seoul Run", "type": "run", "km": 6.2, "dur": "00:41:55", "pace": "06'45\"", "pace_s": 405, "hr": 158, "tl": 61, "dow": "Sat", "md": "11/7", "year": 2026}, {"date": "2026-11-05", "name": "Treadmill", "type": "treadmill", "km": 2.8, "dur": "00:19:28", "pace": "06'57\"", "pace_s": 417, "hr": 150, "tl": 48, "dow": "Thu", "md": "11/5", "year": 2026}, {"date": "2026-11-04", "name": "Treadmill", "type": "treadmill", "km": 2.7, "dur": "00:20:07", "pace": "07'27\"", "pace_s": 447, "hr": 153, "tl": 56, "dow": "Wed", "md": "11/4", "year": 2026}, {"date": "2026-11-01", "name": "Seoul Run", "type": "run", "km": 42.24, "dur": "03:58:25", "pace": "05'39\"", "pace_s": 339, "hr": 169, "tl": 861, "dow": "Sun", "md": "11/1", "year": 2026}, {"date": "2026-10-31", "name": "Seoul Run", "type": "run", "km": 2.5, "dur": "00:16:37", "pace": "06'39\"", "pace_s": 399, "hr": 147, "tl": 25, "dow": "Sat", "md": "10/31", "year": 2026}, {"date": "2026-10-29", "name": "Treadmill", "type": "treadmill", "km": 3.8, "dur": "00:21:04", "pace": "05'33\"", "pace_s": 333, "hr": 158, "tl": 69, "dow": "Thu", "md": "10/29", "year": 2026}, {"date": "2026-10-26", "name": "Treadmill", "type": "treadmill", "km": 4.25, "dur": "00:23:32", "pace": "05'32\"", "pace_s": 332, "hr": 146, "tl": 51, "dow": "Mon", "md": "10/26", "year": 2026}, {"date": "2026-10-24", "name": "Seoul Run", "type": "run", "km": 2.64, "dur": "00:20:17", "pace": "07'41\"", "pace_s": 461, "hr": 157, "tl": 26, "dow": "Sat", "md": "10/24", "year": 2026}, {"date": "2026-10-18", "name": "Seoul Run", "type": "run", "km": 10.25, "dur": "01:05:02", "pace": "06'21\"", "pace_s": 381, "hr": 156, "tl": 109, "dow": "Sun", "md": "10/18", "year": 2026}, {"date": "2026-10-17", "name": "Seoul Run", "type": "run", "km": 15.02, "dur": "01:23:45", "pace": "05'35\"", "pace_s": 335, "hr": 165, "tl": 246, "dow": "Sat", "md": "10/17", "year": 2026}, {"date": "2026-10-17", "name": "Seoul Run", "type": "run", "km": 2.01, "dur": "00:12:45", "pace": "06'22\"", "pace_s": 382, "hr": 154, "tl": 26, "dow": "Sat", "md": "10/17", "year": 2026}, {"date": "2026-10-13", "name": "Treadmill", "type": "treadmill", "km": 4.05, "dur": "00:22:26", "pace": "05'32\"", "pace_s": 332, "hr": 157, "tl": 69, "dow": "Tue", "md": "10/13", "year": 2026}, {"date": "2026-10-11", "name": "Seoul Run", "type": "run", "km": 10.86, "dur": "00:53:07", "pace": "04'53\"", "pace_s": 293, "hr": 167, "tl": 226, "dow": "Sun", "md": "10/11", "year": 2026}, {"date": "2026-10-09", "name": "Seoul Run", "type": "run", "km": 20.01, "dur": "02:12:52", "pace": "06'38\"", "pace_s": 398, "hr": 159, "tl": 259, "dow": "Fri", "md": "10/9", "year": 2026}, {"date": "2026-10-05", "name": "Seoul Run", "type": "run", "km": 8.0, "dur": "00:55:30", "pace": "06'56\"", "pace_s": 416, "hr": 145, "tl": 82, "dow": "Mon", "md": "10/5", "year": 2026}, {"date": "2026-10-04", "name": "Seoul Run", "type": "run", "km": 9.94, "dur": "00:53:58", "pace": "05'26\"", "pace_s": 326, "hr": 162, "tl": 158, "dow": "Sun", "md": "10/4", "year": 2026}, {"date": "2026-10-03", "name": "Seoul Run", "type": "run", "km": 5.48, "dur": "00:38:34", "pace": "07'02\"", "pace_s": 422, "hr": 146, "tl": 44, "dow": "Sat", "md": "10/3", "year": 2026}, {"date": "2026-10-01", "name": "Treadmill", "type": "treadmill", "km": 4.1, "dur": "00:22:17", "pace": "05'26\"", "pace_s": 326, "hr": 154, "tl": 66, "dow": "Thu", "md": "10/1", "year": 2026}, {"date": "2026-09-29", "name": "Seoul Run", "type": "run", "km": 6.02, "dur": "00:35:34", "pace": "05'55\"", "pace_s": 355, "hr": 149, "tl": 75, "dow": "Tue", "md": "9/29", "year": 2026}, {"date": "2026-09-27", "name": "Seoul Run", "type": "run", "km": 30.31, "dur": "03:07:48", "pace": "06'12\"", "pace_s": 372, "hr": 164, "tl": 371, "dow": "Sun", "md": "9/27", "year": 2026}, {"date": "2026-09-26", "name": "Incheon Run", "type": "run", "km": 10.01, "dur": "01:02:36", "pace": "06'15\"", "pace_s": 375, "hr": 161, "tl": 156, "dow": "Sat", "md": "9/26", "year": 2026}, {"date": "2026-09-25", "name": "Seongnam Run", "type": "run", "km": 15.63, "dur": "01:36:25", "pace": "06'10\"", "pace_s": 370, "hr": 158, "tl": 249, "dow": "Fri", "md": "9/25", "year": 2026}, {"date": "2026-09-22", "name": "Fukuoka Run", "type": "run", "km": 2.02, "dur": "00:13:00", "pace": "06'27\"", "pace_s": 387, "hr": 146, "tl": 27, "dow": "Tue", "md": "9/22", "year": 2026}, {"date": "2026-09-22", "name": "Fukuoka Run", "type": "run", "km": 10.01, "dur": "00:54:12", "pace": "05'25\"", "pace_s": 325, "hr": 156, "tl": 160, "dow": "Tue", "md": "9/22", "year": 2026}, {"date": "2026-09-21", "name": "Fukuoka Run", "type": "run", "km": 6.2, "dur": "00:40:37", "pace": "06'33\"", "pace_s": 393, "hr": 142, "tl": 73, "dow": "Mon", "md": "9/21", "year": 2026}, {"date": "2026-09-19", "name": "Seoul Run", "type": "run", "km": 10.15, "dur": "01:41:35", "pace": "10'00\"", "pace_s": 600, "hr": 136, "tl": 110, "dow": "Sat", "md": "9/19", "year": 2026}, {"date": "2026-09-16", "name": "Treadmill", "type": "treadmill", "km": 4.03, "dur": "00:22:24", "pace": "05'34\"", "pace_s": 334, "hr": 155, "tl": 64, "dow": "Wed", "md": "9/16", "year": 2026}, {"date": "2026-09-15", "name": "Seoul Run", "type": "run", "km": 6.03, "dur": "00:37:34", "pace": "06'14\"", "pace_s": 374, "hr": 160, "tl": 80, "dow": "Tue", "md": "9/15", "year": 2026}, {"date": "2026-09-13", "name": "Seoul Run", "type": "run", "km": 18.42, "dur": "02:08:07", "pace": "06'57\"", "pace_s": 417, "hr": 155, "tl": 190, "dow": "Sun", "md": "9/13", "year": 2026}, {"date": "2026-09-12", "name": "Seoul Run", "type": "run", "km": 10.01, "dur": "01:43:19", "pace": "10'19\"", "pace_s": 619, "hr": 135, "tl": 111, "dow": "Sat", "md": "9/12", "year": 2026}, {"date": "2026-09-10", "name": "Seoul Run", "type": "run", "km": 7.05, "dur": "00:35:21", "pace": "05'01\"", "pace_s": 301, "hr": 168, "tl": 139, "dow": "Thu", "md": "9/10", "year": 2026}, {"date": "2026-09-10", "name": "Treadmill", "type": "treadmill", "km": 3.85, "dur": "00:23:03", "pace": "05'59\"", "pace_s": 359, "hr": 146, "tl": 51, "dow": "Thu", "md": "9/10", "year": 2026}, {"date": "2026-09-09", "name": "Treadmill", "type": "treadmill", "km": 4.11, "dur": "00:21:44", "pace": "05'18\"", "pace_s": 318, "hr": 156, "tl": 67, "dow": "Wed", "md": "9/9", "year": 2026}, {"date": "2026-09-08", "name": "Treadmill", "type": "treadmill", "km": 4.23, "dur": "00:22:56", "pace": "05'25\"", "pace_s": 325, "hr": 155, "tl": 65, "dow": "Tue", "md": "9/8", "year": 2026}], "four": {"km": 101.56, "tl": 1659, "time": "10:28:27", "count": 13, "hr": 153}, "paceTrend": [{"md": "11/21", "pace_s": 377, "pace": "06'17\"", "km": 7.24, "name": "Seoul Run"}, {"md": "11/15", "pace_s": 431, "pace": "07'11\"", "km": 9.86, "name": "Seoul Run"}, {"md": "11/14", "pace_s": 427, "pace": "07'07\"", "km": 6.6, "name": "Seoul Run"}, {"md": "11/11", "pace_s": 347, "pace": "05'47\"", "km": 3.85, "name": "Treadmill"}, {"md": "11/9", "pace_s": 336, "pace": "05'36\"", "km": 3.5, "name": "Treadmill"}, {"md": "11/8", "pace_s": 419, "pace": "06'59\"", "km": 6.02, "name": "Incheon Run"}, {"md": "11/7", "pace_s": 405, "pace": "06'45\"", "km": 6.2, "name": "Seoul Run"}, {"md": "11/5", "pace_s": 417, "pace": "06'57\"", "km": 2.8, "name": "Treadmill"}, {"md": "11/4", "pace_s": 447, "pace": "07'27\"", "km": 2.7, "name": "Treadmill"}, {"md": "11/1", "pace_s": 339, "pace": "05'39\"", "km": 42.24, "name": "Seoul Run"}, {"md": "10/31", "pace_s": 399, "pace": "06'39\"", "km": 2.5, "name": "Seoul Run"}, {"md": "10/29", "pace_s": 333, "pace": "05'33\"", "km": 3.8, "name": "Treadmill"}, {"md": "10/26", "pace_s": 332, "pace": "05'32\"", "km": 4.25, "name": "Treadmill"}, {"md": "10/24", "pace_s": 461, "pace": "07'41\"", "km": 2.64, "name": "Seoul Run"}]};
+
+/* ---------- weekly volume chart ---------- */
+(function(){
+  const svg = document.getElementById('volChart');
+  const weeks = DATA.weeks;
+  const W = 340, H = 190, padL = 26, padR = 6, padT = 22, padB = 26;
+  const iw = W - padL - padR, ih = H - padT - padB;
+  const maxKm = Math.max(...weeks.map(w => w.km));
+  const top = Math.ceil(maxKm / 10) * 10;
+  const bw = iw / weeks.length;
+  const barW = Math.min(24, bw * 0.52);
+  let s = '';
+  // grid
+  for (let i = 0; i <= 3; i++){
+    const y = padT + ih - (ih * i / 3);
+    const val = top * i / 3;
+    s += `<line x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}" stroke="#232b38" stroke-width="1"/>`;
+    s += `<text x="${padL-7}" y="${y+3.5}" fill="#5b6577" font-size="8.5" text-anchor="end">${val % 1 ? val.toFixed(1) : val}</text>`;
+  }
+  weeks.forEach((w, i) => {
+    const x = padL + bw * i + (bw - barW) / 2;
+    const h = Math.max(2, ih * w.km / top);
+    const y = padT + ih - h;
+    const fill = w.current ? 'url(#gNow)' : '#39465c';
+    s += `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="${Math.min(5, barW/2)}" fill="${fill}"/>`;
+    if (w.km > 0)
+      s += `<text x="${x+barW/2}" y="${y-5}" fill="${w.current ? '#b8ff3c' : '#8b97ab'}" font-size="9.5" font-weight="700" text-anchor="middle">${w.km.toFixed(1)}</text>`;
+    s += `<text x="${x+barW/2}" y="${H-padB+14}" fill="${w.current ? '#a8b3c4' : '#5b6577'}" font-size="8.5" text-anchor="middle">${w.label}</text>`;
+    s += `<text x="${x+barW/2}" y="${H-padB+25}" fill="#3f4859" font-size="7.5" text-anchor="middle">${w.runs}×</text>`;
+  });
+  s += `<text x="${padL}" y="${H-4}" fill="#3f4859" font-size="7.5">runs</text>`;
+  s = `<defs><linearGradient id="gNow" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="#d6ff8a"/><stop offset="100%" stop-color="#8fe02c"/></linearGradient></defs>` + s;
+  svg.innerHTML = s;
+})();
+
+/* ---------- pace trend chart ---------- */
+(function(){
+  const svg = document.getElementById('paceChart');
+  const pts = DATA.paceTrend.slice().reverse();  // oldest -> newest
+  const W = 340, H = 170, padL = 30, padR = 8, padT = 16, padB = 24;
+  const iw = W - padL - padR, ih = H - padT - padB;
+  const ps = pts.map(p => p.pace_s);
+  const fast = Math.min(...ps) - 8, slow = Math.max(...ps) + 8;
+  const x = i => padL + (pts.length === 1 ? iw/2 : iw * i / (pts.length - 1));
+  const y = v => padT + ih * (v - fast) / (slow - fast);
+  let s = '';
+  for (let i = 0; i <= 3; i++){
+    const v = fast + (slow-fast) * i / 3;
+    const yy = y(v);
+    const rv = Math.round(v/5)*5;
+    const lab = Math.floor(rv/60) + "'" + String(rv%60).padStart(2,'0') + '"';
+    s += `<line x1="${padL}" y1="${yy}" x2="${W-padR}" y2="${yy}" stroke="#232b38" stroke-width="1"/>`;
+    s += `<text x="${padL-6}" y="${yy+3}" fill="#5b6577" font-size="8" text-anchor="end">${lab}</text>`;
+  }
+  const line = pts.map((p,i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(p.pace_s).toFixed(1)}`).join(' ');
+  const area = line + ` L${x(pts.length-1).toFixed(1)},${padT+ih} L${x(0).toFixed(1)},${padT+ih} Z`;
+  s += `<defs><linearGradient id="gPace" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="rgba(87,182,255,.30)"/><stop offset="100%" stop-color="rgba(87,182,255,0)"/></linearGradient></defs>`;
+  s += `<path d="${area}" fill="url(#gPace)"/>`;
+  s += `<path d="${line}" fill="none" stroke="#57b6ff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+  pts.forEach((p,i) => {
+    const isLast = i === pts.length - 1;
+    s += `<circle cx="${x(i)}" cy="${y(p.pace_s)}" r="${isLast ? 4 : 2.6}" fill="${isLast ? '#b8ff3c' : '#57b6ff'}" stroke="#10141b" stroke-width="1.5"/>`;
+    s += `<title>${p.md} · ${p.name} · ${p.km} km · ${p.pace}/km</title>`;
+  });
+  const marks = [0, Math.floor((pts.length-1)/2), pts.length-1];
+  marks.forEach(i => {
+    s += `<text x="${x(i)}" y="${H-8}" fill="#5b6577" font-size="8" text-anchor="middle">${pts[i].md}</text>`;
+  });
+  svg.innerHTML = s;
+})();
+
+/* ---------- run list ---------- */
+(function(){
+  const list = document.getElementById('runList');
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const GROUPS = {};
+  DATA.runs.forEach(r => {
+    const key = r.date.slice(0,7);
+    (GROUPS[key] = GROUPS[key] || []).push(r);
+  });
+  let html = '';
+  Object.keys(GROUPS).sort().reverse().forEach(key => {
+    const d = new Date(key + '-01T00:00:00');
+    html += `<div class="month-label" data-group="${key}">${MONTHS[d.getMonth()]} ${d.getFullYear()}</div>`;
+    GROUPS[key].forEach(r => {
+      const dd = new Date(r.date + 'T00:00:00');
+      html += `<div class="run" data-type="${r.type}">
+        <div class="d"><b>${String(dd.getDate()).padStart(2,'0')}</b><span>${r.dow}</span></div>
+        <div>
+          <div class="n">${r.name}<span class="tag">${r.type === 'treadmill' ? 'Treadmill' : 'Outdoor'}</span></div>
+          <div class="m"><em>${r.dur}</em> · ${r.pace}/km · <em>${r.hr} bpm</em></div>
+        </div>
+        <div class="r"><b>${r.km.toFixed(2)}<span style="font-size:11px;font-weight:600;color:var(--ink3)"> km</span></b>
+          <span class="tl">${r.tl} TL</span></div>
+      </div>`;
+    });
+  });
+  list.innerHTML = html;
+
+  document.querySelectorAll('.chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.chip').forEach(b => b.setAttribute('aria-pressed', String(b === btn)));
+      const f = btn.dataset.f;
+      document.querySelectorAll('.run').forEach(el => {
+        el.style.display = (f === 'all' || el.dataset.type === f) ? '' : 'none';
+      });
+      document.querySelectorAll('.month-label').forEach(g => {
+        let n = g.nextElementSibling, any = false;
+        while (n && n.classList.contains('run')) { if (n.style.display !== 'none') any = true; n = n.nextElementSibling; }
+        g.style.display = any ? '' : 'none';
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>
