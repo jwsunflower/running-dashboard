@@ -500,7 +500,7 @@ function initMap(){
    itself stays small; until they arrive the list is fully usable. */
 let routesReady = false;
 function loadRoutes(){
-  fetch('routes.json?v=20261122a')
+  fetch('routes.json?v=20261122b')
     .then(res => res.ok ? res.json() : Promise.reject(res.status))
     .then(obj => {
       Object.keys(obj).forEach(id => {
@@ -524,21 +524,35 @@ function visibleRuns(){
   return RUNS.filter(r => r.path && (monthFilter === 'all' || String(r.mon) === monthFilter));
 }
 
+function haversineKm(a, b){
+  const R = 6371, rad = d => d * Math.PI / 180;
+  const dLat = rad(b[0] - a[0]), dLon = rad(b[1] - a[1]);
+  const h = Math.sin(dLat/2)**2 + Math.cos(rad(a[0])) * Math.cos(rad(b[0])) * Math.sin(dLon/2)**2;
+  return 2 * R * Math.asin(Math.sqrt(Math.min(1, h)));
+}
+
 function drawAll(){
   allLayer.clearLayers();
-  const pts = [];
-  visibleRuns().forEach(r => {
+  const runs = visibleRuns();
+  runs.forEach(r => {
     const p = L.polyline(r.path, {color:'#8fe02c', weight:2, opacity:.42, interactive:true});
     p.on('click', () => selectRun(r.id, false));
     p.bindTooltip(`${r.md} · ${r.km.toFixed(2)} km · ${r.pace}/km`, {direction:'top'});
     p.addTo(allLayer);
     r._poly = p;
-    r.path.forEach(q => pts.push(q));
+    r._mid = r.path[Math.floor(r.path.length / 2)];
   });
-  document.getElementById('mapCount').textContent = `${visibleRuns().length}개 러닝 · GPS 경로`;
+  document.getElementById('mapCount').textContent = `${runs.length}개 러닝 · GPS 경로`;
+  if (!runs.length) return;
+  // fit to the main cluster so one overseas trip does not shrink every route
+  const lats = runs.map(r => r._mid[0]).sort((a, b) => a - b);
+  const lons = runs.map(r => r._mid[1]).sort((a, b) => a - b);
+  const centre = [lats[Math.floor(lats.length / 2)], lons[Math.floor(lons.length / 2)]];
+  const near = runs.filter(r => haversineKm(centre, r._mid) < 1000);
+  const pts = [];
+  (near.length ? near : runs).forEach(r => r.path.forEach(q => pts.push(q)));
   if (pts.length){
-    const b = L.latLngBounds(pts).pad(0.12);
-    map.fitBounds(b, {animate:false});
+    map.fitBounds(L.latLngBounds(pts).pad(0.12), {animate:false});
   }
 }
 
